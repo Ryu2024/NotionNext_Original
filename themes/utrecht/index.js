@@ -1,10 +1,12 @@
 /**
  * Utrecht Theme for NotionNext
- * Accurately modelled after utrecht.jp
+ * Modelled after utrecht.jp
  *
- * Palette : #e8001d (red) + #000 on #fff
- * Font    : system grotesque sans-serif
- * Layout  : top nav + left rotated label + main content
+ * Changes:
+ * - Body text red (#e8001d)
+ * - Site title uses Shippori Mincho (明体)
+ * - No subtitle
+ * - Nav paths: /photo and /blog (handled via LayoutSlug slug detection)
  */
 
 import Head from 'next/head'
@@ -22,8 +24,8 @@ export const CONFIG = {
   THEME_SWITCH: false,
   NAV_TABS: [
     { label: 'Home',  path: '/' },
-    { label: 'Photo', path: '/category/Photo' },
-    { label: 'Blog',  path: '/category/Blog' },
+    { label: 'Photo', path: '/photo' },
+    { label: 'Blog',  path: '/blog' },
     { label: 'About', path: '/about' }
   ]
 }
@@ -38,16 +40,19 @@ const formatDate = (dateStr) => {
 // ─── Global CSS ───────────────────────────────────────────────────────────────
 const ThemeFonts = () => (
   <style dangerouslySetInnerHTML={{ __html: `
+    @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&display=swap');
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       background: #fff;
-      color: #000;
+      color: ${RED};
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial,
                    'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
       font-size: 13px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
     a { color: inherit; text-decoration: none; }
@@ -62,35 +67,24 @@ const ThemeFonts = () => (
       display: flex;
       align-items: center;
       padding: 18px 32px;
-      gap: 0;
     }
 
-    /* Logo block */
     .u-logo {
-      display: flex;
-      flex-direction: column;
       margin-right: 40px;
       flex-shrink: 0;
+      text-decoration: none;
     }
 
     .u-logo-wordmark {
-      font-size: 26px;
-      font-weight: 800;
+      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'MS Mincho', Georgia, serif;
+      font-size: 22px;
+      font-weight: 700;
       color: ${RED};
-      letter-spacing: -0.02em;
+      letter-spacing: 0.05em;
       line-height: 1;
-      font-style: italic;
+      display: block;
     }
 
-    .u-logo-sub {
-      font-size: 9px;
-      color: ${RED};
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-
-    /* Nav row */
     .u-nav-row {
       display: flex;
       align-items: center;
@@ -112,7 +106,7 @@ const ThemeFonts = () => (
     .u-nav-link:hover { border-bottom-color: ${RED}; }
     .u-nav-link.active { font-weight: 700; border-bottom-color: ${RED}; }
 
-    /* ── Left rotated label ── */
+    /* ── Page layout ── */
     .u-page-wrap {
       display: flex;
       position: relative;
@@ -137,6 +131,7 @@ const ThemeFonts = () => (
       writing-mode: vertical-rl;
       text-orientation: mixed;
       transform: rotate(180deg);
+      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 9px;
       color: ${RED};
       letter-spacing: 0.15em;
@@ -144,21 +139,19 @@ const ThemeFonts = () => (
       line-height: 1;
     }
 
-    /* ── Content divider ── */
     .u-divider {
       border: none;
       border-top: 1px solid #e0e0e0;
       margin: 0;
     }
 
-    /* ── Main content ── */
     .u-content {
       flex: 1;
       min-width: 0;
       border-left: 1px solid #e0e0e0;
     }
 
-    /* ── Home cover ── */
+    /* ── Home ── */
     .u-home-img {
       width: 100%;
       height: auto;
@@ -195,7 +188,7 @@ const ThemeFonts = () => (
     .u-photo-caption {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      padding: 10px 12px 10px;
+      padding: 10px 12px;
       font-size: 9px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
@@ -223,12 +216,12 @@ const ThemeFonts = () => (
     .u-blog-item {
       display: block;
       padding: 14px 0;
-      border-bottom: 1px solid #ebebeb;
+      border-bottom: 1px solid #f0e0e0;
       text-decoration: none;
       color: inherit;
     }
 
-    .u-blog-item:first-of-type { border-top: 1px solid #ebebeb; }
+    .u-blog-item:first-of-type { border-top: 1px solid #f0e0e0; }
 
     .u-blog-title {
       font-size: 13px;
@@ -238,15 +231,15 @@ const ThemeFonts = () => (
       transition: opacity 0.15s;
     }
 
-    .u-blog-item:hover .u-blog-title { opacity: 0.6; }
+    .u-blog-item:hover .u-blog-title { opacity: 0.55; }
 
     .u-blog-meta {
       font-size: 10px;
-      color: #999;
+      color: #e88080;
       letter-spacing: 0.04em;
     }
 
-    /* ── Post ── */
+    /* ── Post / About ── */
     .u-post-wrap {
       padding: 40px 40px 80px;
       max-width: 660px;
@@ -261,7 +254,8 @@ const ThemeFonts = () => (
     }
 
     .u-post-title {
-      font-size: 16px;
+      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-size: 18px;
       font-weight: 700;
       color: ${RED};
       line-height: 1.35;
@@ -270,38 +264,40 @@ const ThemeFonts = () => (
 
     .u-post-date {
       font-size: 10px;
-      color: #999;
+      color: #e88080;
       letter-spacing: 0.04em;
       margin-bottom: 36px;
     }
 
-    /* Notion overrides */
+    /* ── Notion content overrides ── */
     .notion {
       font-size: 13px;
-      line-height: 1.75;
-      color: #111;
+      line-height: 1.8;
+      color: ${RED};
     }
 
     .notion .notion-page-title { display: none; }
 
     .notion h1, .notion h2, .notion h3 {
+      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-weight: 700;
       color: ${RED};
       margin: 24px 0 8px;
     }
 
-    .notion h1 { font-size: 15px; }
-    .notion h2 { font-size: 13px; }
-    .notion h3 { font-size: 12px; }
+    .notion h1 { font-size: 16px; }
+    .notion h2 { font-size: 14px; }
+    .notion h3 { font-size: 13px; }
     .notion p  { margin-bottom: 10px; }
-    .notion a  { color: ${RED}; text-decoration: underline; }
+    .notion a  { color: ${RED}; text-decoration: underline; text-underline-offset: 2px; }
+    .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
 
     /* ── Footer ── */
     .u-footer {
       border-top: 1px solid #e0e0e0;
       padding: 20px 40px;
       font-size: 10px;
-      color: #bbb;
+      color: #e88080;
       display: flex;
       justify-content: space-between;
       letter-spacing: 0.04em;
@@ -318,14 +314,14 @@ const ThemeFonts = () => (
     .u-404-num {
       font-size: 60px;
       font-weight: 800;
-      color: #eee;
+      color: #fce0e0;
       line-height: 1;
     }
 
     /* ── Mobile ── */
     @media (max-width: 680px) {
       .u-header-top { padding: 14px 16px; }
-      .u-logo-wordmark { font-size: 20px; }
+      .u-logo-wordmark { font-size: 17px; }
       .u-nav-row { gap: 16px; }
       .u-nav-link { font-size: 11px; }
       .u-left-label { display: none; }
@@ -335,8 +331,7 @@ const ThemeFonts = () => (
       .u-footer { padding: 16px; flex-direction: column; gap: 6px; }
     }
 
-    /* Fade */
-    @keyframes uFade { from { opacity:0; } to { opacity:1; } }
+    @keyframes uFade { from { opacity: 0; } to { opacity: 1; } }
     .u-fade { animation: uFade 0.35s ease both; }
   `}} />
 )
@@ -354,13 +349,9 @@ const SiteHeader = ({ siteInfo }) => {
   return (
     <header className="u-header">
       <div className="u-header-top">
-        {/* Logo */}
-        <Link href="/" className="u-logo" style={{ textDecoration: 'none' }}>
+        <Link href="/" className="u-logo">
           <span className="u-logo-wordmark">{siteInfo?.title || 'Journal'}</span>
-         
         </Link>
-
-        {/* Nav */}
         <nav className="u-nav-row">
           {CONFIG.NAV_TABS.map(tab => (
             <Link
@@ -397,20 +388,18 @@ export const LayoutBase = ({ children, siteInfo }) => {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{siteInfo?.title || 'Journal'}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </Head>
       <ThemeFonts />
       <SiteHeader siteInfo={siteInfo} />
       <hr className="u-divider" />
       <div className="u-page-wrap">
-        {/* Left rotated label */}
         <div className="u-left-label">
           <div className="u-left-label-inner">
-            <span className="u-left-label-text">
-              {siteInfo?.title || 'Journal'}
-            </span>
+            <span className="u-left-label-text">{siteInfo?.title || 'Journal'}</span>
           </div>
         </div>
-        {/* Content */}
         <div className="u-content">
           {children}
           <SiteFooter siteInfo={siteInfo} />
@@ -432,10 +421,10 @@ export const LayoutIndex = (props) => {
       ) : (
         <div style={{
           width: '100%', height: '55vh',
-          background: '#fafafa',
+          background: '#fff5f5',
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-          <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             Set a cover image in your Notion database
           </span>
         </div>
@@ -472,7 +461,7 @@ const PhotoGrid = ({ posts }) => {
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
-        <p style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em' }}>No photos yet.</p>
+        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>No photos yet.</p>
       </div>
     )
   }
@@ -498,7 +487,7 @@ const BlogList = ({ posts }) => {
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
-        <p style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em' }}>No posts yet.</p>
+        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>No posts yet.</p>
       </div>
     )
   }
@@ -522,8 +511,38 @@ const BlogList = ({ posts }) => {
 }
 
 // ─── LayoutSlug ───────────────────────────────────────────────────────────────
+// Handles /photo and /blog as special slugs that render grid/list views
 export const LayoutSlug = (props) => {
-  const { post } = props
+  const { post, posts, allPosts } = props
+
+  // Special slug: /photo → show photo grid from all posts
+  if (post?.slug === 'photo' || (!post && props.slug === 'photo')) {
+    const source = allPosts || posts || []
+    const photoItems = source.filter(p =>
+      p?.category?.toLowerCase() === 'photo' ||
+      p?.tags?.some(t => t?.toLowerCase() === 'photo')
+    )
+    return (
+      <LayoutBase {...props}>
+        <PhotoGrid posts={photoItems.length ? photoItems : source.filter(p => p?.pageCover || p?.pageCoverThumbnail)} />
+      </LayoutBase>
+    )
+  }
+
+  // Special slug: /blog → show blog list from all posts
+  if (post?.slug === 'blog' || (!post && props.slug === 'blog')) {
+    const source = allPosts || posts || []
+    const blogItems = source.filter(p =>
+      p?.category?.toLowerCase() === 'blog' ||
+      p?.tags?.some(t => t?.toLowerCase() === 'blog')
+    )
+    return (
+      <LayoutBase {...props}>
+        <BlogList posts={blogItems.length ? blogItems : source} />
+      </LayoutBase>
+    )
+  }
+
   if (!post) return <Layout404 {...props} />
 
   const blockMap = props.blockMap || post.blockMap || post.content
@@ -549,7 +568,7 @@ export const LayoutSlug = (props) => {
             />
           </div>
         ) : (
-          <p style={{ fontSize: '11px', color: '#bbb' }}>Loading…</p>
+          <p style={{ fontSize: '11px', color: '#e8a0a0' }}>Loading…</p>
         )}
       </div>
     </LayoutBase>
@@ -583,7 +602,7 @@ export const LayoutSearch = (props) => {
             background: 'transparent',
             padding: '6px 0',
             fontSize: '13px',
-            color: '#000',
+            color: RED,
             outline: 'none',
             marginBottom: '32px',
             fontFamily: 'inherit'
@@ -611,12 +630,12 @@ export const LayoutArchive = (props) => {
                 href={`/${post.slug}`}
                 style={{
                   display: 'flex', justifyContent: 'space-between',
-                  padding: '7px 0', borderBottom: '1px solid #f0f0f0',
-                  fontSize: '13px', color: 'inherit', textDecoration: 'none'
+                  padding: '7px 0', borderBottom: '1px solid #fce8e8',
+                  fontSize: '13px', color: RED, textDecoration: 'none'
                 }}
               >
                 <span>{post.title}</span>
-                <span style={{ color: '#bbb', fontSize: '10px' }}>{formatDate(post.date)}</span>
+                <span style={{ color: '#e8a0a0', fontSize: '10px' }}>{formatDate(post.date)}</span>
               </Link>
             ))}
           </div>
@@ -631,7 +650,7 @@ export const Layout404 = (props) => (
   <LayoutBase {...props}>
     <div className="u-404">
       <p className="u-404-num">404</p>
-      <p style={{ fontSize: '11px', color: '#bbb' }}>Page not found.</p>
+      <p style={{ fontSize: '11px', color: '#e8a0a0' }}>Page not found.</p>
       <Link href="/" style={{ fontSize: '11px', color: RED, textDecoration: 'underline', marginTop: '8px' }}>
         ← Home
       </Link>
@@ -640,3 +659,4 @@ export const Layout404 = (props) => (
 )
 
 export default LayoutBase
+
