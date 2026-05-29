@@ -439,7 +439,7 @@ export const LayoutPostList = (props) => {
   const router = useRouter()
 
   if (!category && !tag && router.asPath === '/') {
-    return <LayoutBase {...props}><></></LayoutBase>
+    return null
   }
 
   const isPhoto =
@@ -659,4 +659,3 @@ export const Layout404 = (props) => (
 )
 
 export default LayoutBase
-
