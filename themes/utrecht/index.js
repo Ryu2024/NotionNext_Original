@@ -1,18 +1,12 @@
 /**
  * Utrecht Theme for NotionNext
  * Inspired by utrecht.jp — a minimalist Japanese art/design aesthetic
- *
- * Design language:
- * - Pure white background, near-black text
- * - Cormorant Garamond (display) + Noto Serif JP (body)
- * - Ultra-minimal navigation, lowercase labels
- * - Generous negative space, images as the primary actor
  */
 
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { NotionRenderer } from 'react-notion-x'
 import React, { createContext, useContext } from 'react'
 
@@ -22,9 +16,9 @@ const ShellContext = createContext(false)
 export const CONFIG = {
   THEME_SWITCH: false,
   NAV_TABS: [
-    { label: 'home', path: '/' },
+    { label: 'home',  path: '/' },
     { label: 'photo', path: '/category/Photo' },
-    { label: 'blog', path: '/category/Blog' },
+    { label: 'blog',  path: '/category/Blog' },
     { label: 'about', path: '/about' }
   ]
 }
@@ -37,15 +31,13 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-// ─── Google Fonts loader ──────────────────────────────────────────────────────
+// ─── Fonts & Global CSS ───────────────────────────────────────────────────────
 const ThemeFonts = () => (
-  <style global="true">{`
+  <style dangerouslySetInnerHTML={{ __html: `
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+JP:wght@200;300;400&family=IM+Fell+English+SC&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { font-size: 16px; }
-
     body {
       background: #fafaf8;
       color: #111;
@@ -55,7 +47,6 @@ const ThemeFonts = () => (
       min-height: 100vh;
     }
 
-    /* ── Typography ── */
     .utrecht-site-name {
       font-family: 'IM Fell English SC', serif;
       font-size: 0.8rem;
@@ -112,7 +103,6 @@ const ThemeFonts = () => (
       font-weight: 300;
     }
 
-    /* ── Layout ── */
     .utrecht-header {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -131,28 +121,15 @@ const ThemeFonts = () => (
 
     .utrecht-main { padding-top: 5rem; min-height: 100vh; }
 
-    /* ── Home ── */
+    /* Home: single full-width image, natural aspect ratio */
     .utrecht-home-cover {
       width: 100%;
-      height: auto;          /* 按图片原始比例显示 */
+      height: auto;
       display: block;
       filter: brightness(0.96);
     }
 
-
-    .utrecht-home-caption {
-      position: fixed;
-      bottom: 2rem;
-      right: 3rem;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      color: rgba(255,255,255,0.7);
-      text-transform: uppercase;
-      pointer-events: none;
-    }
-
-    /* ── Photo Grid ── */
+    /* Photo Grid */
     .utrecht-photo-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -187,9 +164,7 @@ const ThemeFonts = () => (
       padding: 1.2rem;
     }
 
-    .utrecht-photo-item:hover .utrecht-photo-overlay {
-      background: rgba(0,0,0,0.25);
-    }
+    .utrecht-photo-item:hover .utrecht-photo-overlay { background: rgba(0,0,0,0.25); }
 
     .utrecht-photo-label {
       font-family: 'Cormorant Garamond', serif;
@@ -201,7 +176,7 @@ const ThemeFonts = () => (
     }
     .utrecht-photo-item:hover .utrecht-photo-label { color: rgba(255,255,255,0.9); }
 
-    /* ── Blog List ── */
+    /* Blog List */
     .utrecht-blog-list {
       max-width: 680px;
       margin: 0 auto;
@@ -243,35 +218,26 @@ const ThemeFonts = () => (
 
     .utrecht-blog-item:hover .utrecht-blog-item-title { opacity: 0.65; }
 
-    /* ── About ── */
+    /* About & Post */
     .utrecht-about {
       max-width: 560px;
       margin: 0 auto;
       padding: 4rem 2rem 8rem;
     }
 
-    /* ── Single Post ── */
     .utrecht-post {
       max-width: 660px;
       margin: 0 auto;
       padding: 3rem 2rem 8rem;
     }
 
-    .utrecht-post-cover {
-      width: 100%;
-      max-height: 55vh;
-      object-fit: cover;
-      display: block;
-      margin-bottom: 3rem;
-    }
-
-    /* ── Notion renderer overrides ── */
+    /* Notion content overrides */
     .notion { font-family: 'Noto Serif JP', serif; font-size: 0.9rem; line-height: 1.85; color: #333; font-weight: 300; }
     .notion h1, .notion h2, .notion h3 { font-family: 'Cormorant Garamond', serif; font-weight: 400; }
     .notion a { color: #111; border-bottom: 1px solid #ccc; text-decoration: none; }
     .notion a:hover { border-bottom-color: #111; }
 
-    /* ── Footer ── */
+    /* Footer */
     .utrecht-footer {
       border-top: 1px solid #ebebeb;
       padding: 2.5rem 3rem;
@@ -280,7 +246,7 @@ const ThemeFonts = () => (
       justify-content: space-between;
     }
 
-    /* ── Responsive ── */
+    /* Responsive */
     @media (max-width: 640px) {
       .utrecht-header { padding: 1.2rem 1.5rem; }
       .utrecht-nav { gap: 1.4rem; }
@@ -293,14 +259,13 @@ const ThemeFonts = () => (
       .utrecht-photo-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
     }
 
-    /* ── Fade in ── */
     @keyframes utrechtFade {
       from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     .utrecht-fade { animation: utrechtFade 0.5s ease both; }
     .utrecht-fade-delay { animation: utrechtFade 0.5s ease 0.15s both; }
-  `}</style>
+  `}} />
 )
 
 // ─── Header ───────────────────────────────────────────────────────────────────
@@ -347,7 +312,6 @@ const Footer = ({ siteInfo }) => (
 export const LayoutBase = ({ children, siteInfo }) => {
   const hasShell = useContext(ShellContext)
 
-  // 如果已在 LayoutBase 内部，只渲染内容，不重复 header/footer
   if (hasShell) return <>{children}</>
 
   return (
@@ -366,11 +330,10 @@ export const LayoutBase = ({ children, siteInfo }) => {
     </ShellContext.Provider>
   )
 }
+
 // ─── LayoutIndex (Home) ───────────────────────────────────────────────────────
 export const LayoutIndex = (props) => {
   const { siteInfo } = props
-
-  // 直接用 Notion 站点封面，没有就显示提示文字
   const coverImage = siteInfo?.pageCover || siteInfo?.pageCoverThumbnail
 
   return (
@@ -379,7 +342,7 @@ export const LayoutIndex = (props) => {
         <img
           src={coverImage}
           alt={siteInfo?.title}
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          className="utrecht-home-cover"
         />
       ) : (
         <div style={{
@@ -409,19 +372,23 @@ export const LayoutPostList = (props) => {
   const { posts, category, tag } = props
   const router = useRouter()
 
-  // 首页不渲染文章列表（由 LayoutIndex 负责首页内容）
+  // 首页交给 LayoutIndex 处理，这里直接返回空
   if (!category && !tag && router.asPath === '/') {
     return <LayoutBase {...props}><></></LayoutBase>
   }
 
-  const isPhotoSection = category?.toLowerCase() === 'photo' || tag?.toLowerCase() === 'photo'
+  const isPhotoSection =
+    category?.toLowerCase() === 'photo' ||
+    tag?.toLowerCase() === 'photo' ||
+    router.asPath.toLowerCase().includes('/category/photo')
 
   if (isPhotoSection) {
-    return <LayoutBase {...props}><PhotoGrid posts={posts} /></LayoutBase>
+    return (
+      <LayoutBase {...props}>
+        <PhotoGrid posts={posts} />
+      </LayoutBase>
+    )
   }
-
-  return <LayoutBase {...props}><BlogList posts={posts} /></LayoutBase>
-}
 
   return (
     <LayoutBase {...props}>
@@ -430,13 +397,9 @@ export const LayoutPostList = (props) => {
   )
 }
 
-// ─── Photo Grid component ─────────────────────────────────────────────────────
+// ─── Photo Grid ───────────────────────────────────────────────────────────────
 const PhotoGrid = ({ posts }) => {
-  const photoPosts = posts?.filter(
-    (p) =>
-      p?.pageCover ||
-      p?.pageCoverThumbnail
-  ) || []
+  const photoPosts = posts?.filter(p => p?.pageCover || p?.pageCoverThumbnail) || []
 
   if (!photoPosts.length) {
     return (
@@ -466,7 +429,7 @@ const PhotoGrid = ({ posts }) => {
   )
 }
 
-// ─── Blog List component ──────────────────────────────────────────────────────
+// ─── Blog List ────────────────────────────────────────────────────────────────
 const BlogList = ({ posts }) => {
   const blogPosts = posts || []
 
@@ -480,7 +443,7 @@ const BlogList = ({ posts }) => {
 
   return (
     <div className="utrecht-blog-list utrecht-fade">
-      <p className="utrecht-section-label" style={{ marginBottom: '0.5rem', paddingBottom: '0.5rem' }}>
+      <p className="utrecht-section-label" style={{ marginBottom: '0.5rem' }}>
         {blogPosts.length} {blogPosts.length === 1 ? 'entry' : 'entries'}
       </p>
       {blogPosts.map((post) => (
@@ -496,9 +459,7 @@ const BlogList = ({ posts }) => {
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.4rem' }}>
             <p className="utrecht-blog-item-title">{post.title}</p>
             {post.summary && (
-              <p className="utrecht-summary" style={{ fontSize: '0.78rem' }}>
-                {post.summary}
-              </p>
+              <p className="utrecht-summary" style={{ fontSize: '0.78rem' }}>{post.summary}</p>
             )}
             <p className="utrecht-date">{formatDate(post.date)}</p>
           </div>
@@ -516,17 +477,14 @@ export const LayoutSlug = (props) => {
     return <Layout404 {...props} />
   }
 
-  // 兼容不同版本的 NotionNext：blockMap 可能在 props 上，也可能在 post 上
+  // 兼容不同版本 NotionNext 的 blockMap 位置
   const blockMap = props.blockMap || post.blockMap || post.content
 
   const isAbout = post.slug === 'about' || post.type === 'Page'
 
   return (
     <LayoutBase {...props}>
-      <article
-        className={`${isAbout ? 'utrecht-about' : 'utrecht-post'} utrecht-fade`}
-      >
-        {/* 标题区 */}
+      <article className={`${isAbout ? 'utrecht-about' : 'utrecht-post'} utrecht-fade`}>
         <div style={{ marginBottom: '2.5rem' }}>
           {!isAbout && post.category && (
             <p className="utrecht-section-label" style={{ marginBottom: '0.8rem' }}>
@@ -541,7 +499,6 @@ export const LayoutSlug = (props) => {
           )}
         </div>
 
-        {/* 正文 */}
         {blockMap ? (
           <div className="notion">
             <NotionRenderer
@@ -552,26 +509,21 @@ export const LayoutSlug = (props) => {
             />
           </div>
         ) : (
-          <p className="utrecht-summary" style={{ color: '#bbb' }}>
-            正文加载中…
-          </p>
+          <p className="utrecht-summary" style={{ color: '#bbb' }}>正文加载中…</p>
         )}
       </article>
     </LayoutBase>
   )
 }
 
-// ─── LayoutCategory ───────────────────────────────────────────────────────────
+// ─── LayoutCategory / Tag ─────────────────────────────────────────────────────
 export const LayoutCategory = (props) => <LayoutPostList {...props} />
-
-// ─── LayoutTag ────────────────────────────────────────────────────────────────
-export const LayoutTag = (props) => <LayoutPostList {...props} />
+export const LayoutTag      = (props) => <LayoutPostList {...props} />
 
 // ─── LayoutSearch ─────────────────────────────────────────────────────────────
 export const LayoutSearch = (props) => {
   const { posts, keyword } = props
   const [query, setQuery] = useState(keyword || '')
-  const router = useRouter()
 
   const filtered = posts?.filter(
     (p) =>
@@ -621,10 +573,7 @@ export const LayoutArchive = (props) => {
             .sort((a, b) => b - a)
             .map((year) => (
               <div key={year} style={{ marginBottom: '2.5rem' }}>
-                <p
-                  className="utrecht-section-label"
-                  style={{ marginBottom: '1rem', color: '#888' }}
-                >
+                <p className="utrecht-section-label" style={{ marginBottom: '1rem', color: '#888' }}>
                   {year}
                 </p>
                 {archivePosts[year].map((post) => (
@@ -657,38 +606,31 @@ export const LayoutArchive = (props) => {
 // ─── Layout404 ────────────────────────────────────────────────────────────────
 export const Layout404 = (props) => (
   <LayoutBase {...props}>
-    <div
-      style={{
-        minHeight: '70vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '1.5rem'
-      }}
-    >
-      <p
-        style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          fontSize: '5rem',
-          fontWeight: 300,
-          color: '#e0e0e0',
-          lineHeight: 1
-        }}
-      >
+    <div style={{
+      minHeight: '70vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '1.5rem'
+    }}>
+      <p style={{
+        fontFamily: "'Cormorant Garamond', serif",
+        fontSize: '5rem',
+        fontWeight: 300,
+        color: '#e0e0e0',
+        lineHeight: 1
+      }}>
         404
       </p>
       <p className="utrecht-summary">The page you are looking for does not exist.</p>
-      <Link
-        href="/"
-        className="utrecht-nav-item"
-        style={{ marginTop: '1rem' }}
-      >
+      <Link href="/" className="utrecht-nav-item" style={{ marginTop: '1rem' }}>
         ← return home
       </Link>
     </div>
   </LayoutBase>
 )
 
-// ─── Default export (required by NotionNext) ──────────────────────────────────
+// ─── Default export ───────────────────────────────────────────────────────────
 export default LayoutBase
+
