@@ -510,69 +510,39 @@ const BlogList = ({ posts }) => {
 
 // ─── LayoutSlug (Single Post / Page) ─────────────────────────────────────────
 export const LayoutSlug = (props) => {
-  const { post, blockMap } = props
+  const { post } = props
 
   if (!post) {
-    return (
-      <LayoutBase {...props}>
-        <Layout404 {...props} />
-      </LayoutBase>
-    )
+    return <Layout404 {...props} />
   }
 
+  // 兼容不同版本的 NotionNext：blockMap 可能在 props 上，也可能在 post 上
+  const blockMap = props.blockMap || post.blockMap || post.content
+
   const isAbout = post.slug === 'about' || post.type === 'Page'
-  const isPhoto =
-    post.category === 'Photo' ||
-    post.tags?.includes('photo') ||
-    post.tags?.includes('Photo')
 
   return (
     <LayoutBase {...props}>
-      <article className={isAbout ? 'utrecht-about utrecht-fade' : 'utrecht-post utrecht-fade'}>
-        {/* Cover image for photo posts — full bleed */}
-        {isPhoto && (post.pageCover || post.pageCoverThumbnail) && (
-          <img
-            src={post.pageCover || post.pageCoverThumbnail}
-            alt={post.title}
-            className="utrecht-post-cover"
-          />
-        )}
-
-        {/* Header info */}
-        {!isAbout && (
-          <div style={{ marginBottom: '2.5rem' }}>
-            {post.category && (
-              <p className="utrecht-section-label" style={{ marginBottom: '0.8rem' }}>
-                {post.category}
-              </p>
-            )}
-            <h1 className="utrecht-post-title">{post.title}</h1>
+      <article
+        className={`${isAbout ? 'utrecht-about' : 'utrecht-post'} utrecht-fade`}
+      >
+        {/* 标题区 */}
+        <div style={{ marginBottom: '2.5rem' }}>
+          {!isAbout && post.category && (
+            <p className="utrecht-section-label" style={{ marginBottom: '0.8rem' }}>
+              {post.category}
+            </p>
+          )}
+          <h1 className="utrecht-post-title">{post.title}</h1>
+          {!isAbout && (
             <p className="utrecht-date" style={{ marginTop: '0.8rem' }}>
               {formatDate(post.date)}
             </p>
-          </div>
-        )}
+          )}
+        </div>
 
-        {isAbout && (
-          <h1
-            className="utrecht-post-title"
-            style={{ marginBottom: '2.5rem', fontSize: '1.4rem' }}
-          >
-            {post.title}
-          </h1>
-        )}
-
-        {/* Non-photo blog post: show cover below title */}
-        {!isPhoto && !isAbout && (post.pageCover || post.pageCoverThumbnail) && (
-          <img
-            src={post.pageCover || post.pageCoverThumbnail}
-            alt={post.title}
-            className="utrecht-post-cover"
-          />
-        )}
-
-        {/* Notion content */}
-        {blockMap && (
+        {/* 正文 */}
+        {blockMap ? (
           <div className="notion">
             <NotionRenderer
               recordMap={blockMap}
@@ -581,6 +551,10 @@ export const LayoutSlug = (props) => {
               disableHeader={true}
             />
           </div>
+        ) : (
+          <p className="utrecht-summary" style={{ color: '#bbb' }}>
+            正文加载中…
+          </p>
         )}
       </article>
     </LayoutBase>
