@@ -513,25 +513,34 @@ const BlogList = ({ posts }) => {
 // ─── LayoutSlug ───────────────────────────────────────────────────────────────
 // Handles /photo and /blog as special slugs that render grid/list views
 export const LayoutSlug = (props) => {
-  const { post, posts, allPosts } = props
+  const { post } = props
 
-  // Special slug: /photo → show photo grid from all posts
+  // Collect all posts from every possible prop name NotionNext might use
+  const source = (
+    props.allPosts ||
+    props.posts ||
+    props.latestPosts ||
+    props.allPages ||
+    []
+  ).filter(p => p && p.slug !== 'photo' && p.slug !== 'blog' && p.slug !== 'about')
+
+  // Special slug: /photo
   if (post?.slug === 'photo' || (!post && props.slug === 'photo')) {
-    const source = allPosts || posts || []
     const photoItems = source.filter(p =>
       p?.category?.toLowerCase() === 'photo' ||
-      p?.tags?.some(t => t?.toLowerCase() === 'photo')
+      p?.tags?.some(t => t?.toLowerCase() === 'photo') ||
+      p?.pageCover ||
+      p?.pageCoverThumbnail
     )
     return (
       <LayoutBase {...props}>
-        <PhotoGrid posts={photoItems.length ? photoItems : source.filter(p => p?.pageCover || p?.pageCoverThumbnail)} />
+        <PhotoGrid posts={photoItems} />
       </LayoutBase>
     )
   }
 
-  // Special slug: /blog → show blog list from all posts
+  // Special slug: /blog
   if (post?.slug === 'blog' || (!post && props.slug === 'blog')) {
-    const source = allPosts || posts || []
     const blogItems = source.filter(p =>
       p?.category?.toLowerCase() === 'blog' ||
       p?.tags?.some(t => t?.toLowerCase() === 'blog')
