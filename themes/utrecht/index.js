@@ -131,11 +131,11 @@ const ThemeFonts = () => (
     /* ── Home ── */
     .utrecht-home-cover {
       width: 100%;
-      height: calc(100vh - 5rem);
-      object-fit: cover;
+      height: auto;          /* 按图片原始比例显示 */
       display: block;
       filter: brightness(0.96);
     }
+
 
     .utrecht-home-caption {
       position: fixed;
