@@ -1,4 +1,3 @@
-cat > /home/claude/index.js << 'ENDOFFILE'
 /**
  * Utrecht Theme for NotionNext
  * Accurately modelled after utrecht.jp
@@ -641,5 +640,3 @@ export const Layout404 = (props) => (
 )
 
 export default LayoutBase
-ENDOFFILE
-echo "done"
