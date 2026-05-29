@@ -14,6 +14,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { NotionRenderer } from 'react-notion-x'
+import React, { createContext, useContext } from 'react'
+
+const ShellContext = createContext(false)
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 export const CONFIG = {
@@ -341,16 +344,18 @@ const Footer = ({ siteInfo }) => (
 )
 
 // ─── LayoutBase ───────────────────────────────────────────────────────────────
-export const LayoutBase = (props) => {
-  const { children, siteInfo } = props
+export const LayoutBase = ({ children, siteInfo }) => {
+  const hasShell = useContext(ShellContext)
+
+  // 如果已在 LayoutBase 内部，只渲染内容，不重复 header/footer
+  if (hasShell) return <>{children}</>
 
   return (
-    <>
+    <ShellContext.Provider value={true}>
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{siteInfo?.title || 'Journal'}</title>
-        <meta name="description" content={siteInfo?.description || ''} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </Head>
@@ -358,42 +363,43 @@ export const LayoutBase = (props) => {
       <Header siteInfo={siteInfo} />
       <main className="utrecht-main">{children}</main>
       <Footer siteInfo={siteInfo} />
-    </>
+    </ShellContext.Provider>
   )
 }
-
 // ─── LayoutIndex (Home) ───────────────────────────────────────────────────────
 export const LayoutIndex = (props) => {
-  const { posts, siteInfo } = props
+  const { siteInfo } = props
 
-  // Find the first post tagged/categorized as "cover" or "home", else use siteInfo.cover
-  const coverPost = posts?.find(
-    (p) =>
-      p?.tags?.includes('cover') ||
-      p?.category === 'Cover' ||
-      p?.tags?.includes('home')
-  )
-
-  const coverImage =
-    coverPost?.pageCover ||
-    coverPost?.pageCoverThumbnail ||
-    siteInfo?.pageCover ||
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2400&q=80'
-
-  const coverCaption = coverPost?.title || siteInfo?.description || ''
+  // 直接用 Notion 站点封面，没有就显示提示文字
+  const coverImage = siteInfo?.pageCover || siteInfo?.pageCoverThumbnail
 
   return (
     <LayoutBase {...props}>
-      <div style={{ position: 'relative' }}>
+      {coverImage ? (
         <img
           src={coverImage}
-          alt={coverCaption}
-          className="utrecht-home-cover"
+          alt={siteInfo?.title}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
         />
-        {coverCaption && (
-          <div className="utrecht-home-caption">{coverCaption}</div>
-        )}
-      </div>
+      ) : (
+        <div style={{
+          width: '100%',
+          height: '60vh',
+          background: '#f0ede8',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <p style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: '0.8rem',
+            letterSpacing: '0.2em',
+            color: '#aaa'
+          }}>
+            在 Notion 数据库里设置封面图即可显示
+          </p>
+        </div>
+      )}
     </LayoutBase>
   )
 }
@@ -403,19 +409,19 @@ export const LayoutPostList = (props) => {
   const { posts, category, tag } = props
   const router = useRouter()
 
-  // Detect if this is the "Photo" section
-  const isPhotoSection =
-    category?.toLowerCase() === 'photo' ||
-    tag?.toLowerCase() === 'photo' ||
-    router.asPath.toLowerCase().includes('photo')
+  // 首页不渲染文章列表（由 LayoutIndex 负责首页内容）
+  if (!category && !tag && router.asPath === '/') {
+    return <LayoutBase {...props}><></></LayoutBase>
+  }
+
+  const isPhotoSection = category?.toLowerCase() === 'photo' || tag?.toLowerCase() === 'photo'
 
   if (isPhotoSection) {
-    return (
-      <LayoutBase {...props}>
-        <PhotoGrid posts={posts} />
-      </LayoutBase>
-    )
+    return <LayoutBase {...props}><PhotoGrid posts={posts} /></LayoutBase>
   }
+
+  return <LayoutBase {...props}><BlogList posts={posts} /></LayoutBase>
+}
 
   return (
     <LayoutBase {...props}>
