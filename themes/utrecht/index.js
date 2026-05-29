@@ -1,6 +1,11 @@
+cat > /home/claude/index.js << 'ENDOFFILE'
 /**
  * Utrecht Theme for NotionNext
- * Inspired by utrecht.jp — a minimalist Japanese art/design aesthetic
+ * Accurately modelled after utrecht.jp
+ *
+ * Palette : #e8001d (red) + #000 on #fff
+ * Font    : system grotesque sans-serif
+ * Layout  : top nav + left rotated label + main content
  */
 
 import Head from 'next/head'
@@ -12,306 +17,379 @@ import React, { createContext, useContext } from 'react'
 
 const ShellContext = createContext(false)
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+const RED = '#e8001d'
+
 export const CONFIG = {
   THEME_SWITCH: false,
   NAV_TABS: [
-    { label: 'home',  path: '/' },
-    { label: 'photo', path: '/category/Photo' },
-    { label: 'blog',  path: '/category/Blog' },
-    { label: 'about', path: '/about' }
+    { label: 'Home',  path: '/' },
+    { label: 'Photo', path: '/category/Photo' },
+    { label: 'Blog',  path: '/category/Blog' },
+    { label: 'About', path: '/about' }
   ]
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const d = new Date(dateStr?.start_date || dateStr)
   if (isNaN(d)) return ''
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`
 }
 
-// ─── Fonts & Global CSS ───────────────────────────────────────────────────────
+// ─── Global CSS ───────────────────────────────────────────────────────────────
 const ThemeFonts = () => (
   <style dangerouslySetInnerHTML={{ __html: `
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Noto+Serif+JP:wght@200;300;400&family=IM+Fell+English+SC&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 16px; }
-    body {
-      background: #fafaf8;
-      color: #111;
-      font-family: 'Noto Serif JP', 'Georgia', serif;
-      font-weight: 300;
+
+    html, body {
+      background: #fff;
+      color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial,
+                   'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
     }
 
-    .utrecht-site-name {
-      font-family: 'IM Fell English SC', serif;
-      font-size: 0.8rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: #111;
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ── Header ── */
+    .u-header {
+      border-bottom: 1px solid #e0e0e0;
     }
 
-    .utrecht-nav-item {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.8rem;
-      font-weight: 400;
-      letter-spacing: 0.18em;
-      color: #555;
-      text-decoration: none;
-      transition: color 0.2s ease;
-    }
-    .utrecht-nav-item:hover,
-    .utrecht-nav-item.active { color: #111; }
-    .utrecht-nav-item.active {
-      border-bottom: 1px solid #111;
-      padding-bottom: 1px;
-    }
-
-    .utrecht-post-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: clamp(1.6rem, 3vw, 2.2rem);
-      line-height: 1.3;
-      letter-spacing: 0.02em;
-      color: #111;
-    }
-
-    .utrecht-section-label {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.65rem;
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      color: #aaa;
-    }
-
-    .utrecht-date {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
-      color: #999;
-    }
-
-    .utrecht-summary {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 0.82rem;
-      line-height: 1.8;
-      color: #666;
-      font-weight: 300;
-    }
-
-    .utrecht-header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
+    .u-header-top {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 1.6rem 3rem;
-      background: rgba(250,250,248,0.92);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding: 18px 32px;
+      gap: 0;
     }
 
-    .utrecht-nav { display: flex; gap: 2.2rem; align-items: center; }
+    /* Logo block */
+    .u-logo {
+      display: flex;
+      flex-direction: column;
+      margin-right: 40px;
+      flex-shrink: 0;
+    }
 
-    .utrecht-main { padding-top: 5rem; min-height: 100vh; }
+    .u-logo-wordmark {
+      font-size: 26px;
+      font-weight: 800;
+      color: ${RED};
+      letter-spacing: -0.02em;
+      line-height: 1;
+      font-style: italic;
+    }
 
-    /* Home: single full-width image, natural aspect ratio */
-    .utrecht-home-cover {
+    .u-logo-sub {
+      font-size: 9px;
+      color: ${RED};
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* Nav row */
+    .u-nav-row {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .u-nav-link {
+      font-size: 12px;
+      color: ${RED};
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      padding: 3px 0;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+
+    .u-nav-link:hover { border-bottom-color: ${RED}; }
+    .u-nav-link.active { font-weight: 700; border-bottom-color: ${RED}; }
+
+    /* ── Left rotated label ── */
+    .u-page-wrap {
+      display: flex;
+      position: relative;
+    }
+
+    .u-left-label {
+      width: 36px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .u-left-label-inner {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .u-left-label-text {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      font-size: 9px;
+      color: ${RED};
+      letter-spacing: 0.15em;
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    /* ── Content divider ── */
+    .u-divider {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 0;
+    }
+
+    /* ── Main content ── */
+    .u-content {
+      flex: 1;
+      min-width: 0;
+      border-left: 1px solid #e0e0e0;
+    }
+
+    /* ── Home cover ── */
+    .u-home-img {
       width: 100%;
       height: auto;
       display: block;
-      filter: brightness(0.96);
     }
 
-    /* Photo Grid */
-    .utrecht-photo-grid {
+    /* ── Photo grid ── */
+    .u-photo-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 2px;
-      padding: 2rem 0;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: #e0e0e0;
     }
 
-    .utrecht-photo-item {
+    @media (min-width: 1000px) {
+      .u-photo-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .u-photo-cell {
       position: relative;
       overflow: hidden;
       aspect-ratio: 3/2;
-      cursor: pointer;
+      background: #f5f5f5;
     }
 
-    .utrecht-photo-item img {
-      width: 100%;
-      height: 100%;
+    .u-photo-cell img {
+      width: 100%; height: 100%;
       object-fit: cover;
-      transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      display: block;
+      transition: opacity 0.3s;
     }
 
-    .utrecht-photo-item:hover img { transform: scale(1.03); }
+    .u-photo-cell:hover img { opacity: 0.85; }
 
-    .utrecht-photo-overlay {
+    .u-photo-caption {
       position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0);
-      transition: background 0.4s ease;
-      display: flex;
-      align-items: flex-end;
-      padding: 1.2rem;
-    }
-
-    .utrecht-photo-item:hover .utrecht-photo-overlay { background: rgba(0,0,0,0.25); }
-
-    .utrecht-photo-label {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.75rem;
-      letter-spacing: 0.2em;
+      bottom: 0; left: 0; right: 0;
+      padding: 10px 12px 10px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       color: rgba(255,255,255,0);
-      transition: color 0.3s ease;
+      background: linear-gradient(transparent, rgba(0,0,0,0.4));
+      transition: color 0.25s;
     }
-    .utrecht-photo-item:hover .utrecht-photo-label { color: rgba(255,255,255,0.9); }
 
-    /* Blog List */
-    .utrecht-blog-list {
+    .u-photo-cell:hover .u-photo-caption { color: rgba(255,255,255,0.9); }
+
+    /* ── Blog list ── */
+    .u-blog-wrap {
+      padding: 40px 40px 80px;
       max-width: 680px;
-      margin: 0 auto;
-      padding: 3rem 2rem 6rem;
     }
 
-    .utrecht-blog-item {
-      display: grid;
-      grid-template-columns: 90px 1fr;
-      gap: 2rem;
-      padding: 2rem 0;
+    .u-section-label {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: ${RED};
+      margin-bottom: 24px;
+    }
+
+    .u-blog-item {
+      display: block;
+      padding: 14px 0;
       border-bottom: 1px solid #ebebeb;
       text-decoration: none;
       color: inherit;
     }
 
-    .utrecht-blog-item:first-child { border-top: 1px solid #ebebeb; }
+    .u-blog-item:first-of-type { border-top: 1px solid #ebebeb; }
 
-    .utrecht-blog-item-thumb {
-      width: 90px;
-      height: 60px;
-      object-fit: cover;
-      display: block;
-      filter: grayscale(20%);
-      transition: filter 0.3s ease;
+    .u-blog-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: ${RED};
+      margin-bottom: 3px;
+      transition: opacity 0.15s;
     }
 
-    .utrecht-blog-item:hover .utrecht-blog-item-thumb { filter: grayscale(0%); }
+    .u-blog-item:hover .u-blog-title { opacity: 0.6; }
 
-    .utrecht-blog-item-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.05rem;
-      font-weight: 400;
-      letter-spacing: 0.02em;
-      color: #111;
-      line-height: 1.4;
-      transition: opacity 0.2s ease;
+    .u-blog-meta {
+      font-size: 10px;
+      color: #999;
+      letter-spacing: 0.04em;
     }
 
-    .utrecht-blog-item:hover .utrecht-blog-item-title { opacity: 0.65; }
-
-    /* About & Post */
-    .utrecht-about {
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 4rem 2rem 8rem;
-    }
-
-    .utrecht-post {
+    /* ── Post ── */
+    .u-post-wrap {
+      padding: 40px 40px 80px;
       max-width: 660px;
-      margin: 0 auto;
-      padding: 3rem 2rem 8rem;
     }
 
-    /* Notion content overrides */
-    .notion { font-family: 'Noto Serif JP', serif; font-size: 0.9rem; line-height: 1.85; color: #333; font-weight: 300; }
-    .notion h1, .notion h2, .notion h3 { font-family: 'Cormorant Garamond', serif; font-weight: 400; }
-    .notion a { color: #111; border-bottom: 1px solid #ccc; text-decoration: none; }
-    .notion a:hover { border-bottom-color: #111; }
+    .u-post-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: ${RED};
+      margin-bottom: 12px;
+    }
 
-    /* Footer */
-    .utrecht-footer {
-      border-top: 1px solid #ebebeb;
-      padding: 2.5rem 3rem;
+    .u-post-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: ${RED};
+      line-height: 1.35;
+      margin-bottom: 6px;
+    }
+
+    .u-post-date {
+      font-size: 10px;
+      color: #999;
+      letter-spacing: 0.04em;
+      margin-bottom: 36px;
+    }
+
+    /* Notion overrides */
+    .notion {
+      font-size: 13px;
+      line-height: 1.75;
+      color: #111;
+    }
+
+    .notion .notion-page-title { display: none; }
+
+    .notion h1, .notion h2, .notion h3 {
+      font-weight: 700;
+      color: ${RED};
+      margin: 24px 0 8px;
+    }
+
+    .notion h1 { font-size: 15px; }
+    .notion h2 { font-size: 13px; }
+    .notion h3 { font-size: 12px; }
+    .notion p  { margin-bottom: 10px; }
+    .notion a  { color: ${RED}; text-decoration: underline; }
+
+    /* ── Footer ── */
+    .u-footer {
+      border-top: 1px solid #e0e0e0;
+      padding: 20px 40px;
+      font-size: 10px;
+      color: #bbb;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      letter-spacing: 0.04em;
     }
 
-    /* Responsive */
-    @media (max-width: 640px) {
-      .utrecht-header { padding: 1.2rem 1.5rem; }
-      .utrecht-nav { gap: 1.4rem; }
-      .utrecht-blog-list { padding: 2rem 1.5rem 4rem; }
-      .utrecht-blog-item { grid-template-columns: 1fr; }
-      .utrecht-blog-item-thumb { width: 100%; height: 160px; }
-      .utrecht-about { padding: 2rem 1.5rem 4rem; }
-      .utrecht-post { padding: 2rem 1.5rem 4rem; }
-      .utrecht-footer { padding: 2rem 1.5rem; flex-direction: column; gap: 1rem; text-align: center; }
-      .utrecht-photo-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    /* ── 404 ── */
+    .u-404 {
+      padding: 80px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    @keyframes utrechtFade {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .u-404-num {
+      font-size: 60px;
+      font-weight: 800;
+      color: #eee;
+      line-height: 1;
     }
-    .utrecht-fade { animation: utrechtFade 0.5s ease both; }
-    .utrecht-fade-delay { animation: utrechtFade 0.5s ease 0.15s both; }
+
+    /* ── Mobile ── */
+    @media (max-width: 680px) {
+      .u-header-top { padding: 14px 16px; }
+      .u-logo-wordmark { font-size: 20px; }
+      .u-nav-row { gap: 16px; }
+      .u-nav-link { font-size: 11px; }
+      .u-left-label { display: none; }
+      .u-content { border-left: none; }
+      .u-blog-wrap { padding: 28px 16px 60px; }
+      .u-post-wrap { padding: 28px 16px 60px; }
+      .u-footer { padding: 16px; flex-direction: column; gap: 6px; }
+    }
+
+    /* Fade */
+    @keyframes uFade { from { opacity:0; } to { opacity:1; } }
+    .u-fade { animation: uFade 0.35s ease both; }
   `}} />
 )
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-const Header = ({ siteInfo }) => {
+const SiteHeader = ({ siteInfo }) => {
   const router = useRouter()
-  const currentPath = router.asPath
+  const path = router.asPath
 
-  const isActive = (path) => {
-    if (path === '/') return currentPath === '/'
-    return currentPath.startsWith(path)
+  const isActive = (p) => {
+    if (p === '/') return path === '/'
+    return path.startsWith(p)
   }
 
   return (
-    <header className="utrecht-header">
-      <Link href="/" className="utrecht-site-name" style={{ textDecoration: 'none' }}>
-        {siteInfo?.title || 'Journal'}
-      </Link>
-      <nav className="utrecht-nav">
-        {CONFIG.NAV_TABS.map((tab) => (
-          <Link
-            key={tab.path}
-            href={tab.path}
-            className={`utrecht-nav-item${isActive(tab.path) ? ' active' : ''}`}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
+    <header className="u-header">
+      <div className="u-header-top">
+        {/* Logo */}
+        <Link href="/" className="u-logo" style={{ textDecoration: 'none' }}>
+          <span className="u-logo-wordmark">{siteInfo?.title || 'Journal'}</span>
+          <span className="u-logo-sub">Photography &amp; Writing</span>
+        </Link>
+
+        {/* Nav */}
+        <nav className="u-nav-row">
+          {CONFIG.NAV_TABS.map(tab => (
+            <Link
+              key={tab.path}
+              href={tab.path}
+              className={`u-nav-link${isActive(tab.path) ? ' active' : ''}`}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+      <hr className="u-divider" />
     </header>
   )
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
-const Footer = ({ siteInfo }) => (
-  <footer className="utrecht-footer">
-    <span className="utrecht-date" style={{ color: '#bbb' }}>
-      © {new Date().getFullYear()} {siteInfo?.title || ''}
-    </span>
-    <span className="utrecht-section-label">Powered by Notion</span>
+const SiteFooter = ({ siteInfo }) => (
+  <footer className="u-footer">
+    <span>© {new Date().getFullYear()} {siteInfo?.title || ''}</span>
+    <span>Powered by Notion</span>
   </footer>
 )
 
 // ─── LayoutBase ───────────────────────────────────────────────────────────────
 export const LayoutBase = ({ children, siteInfo }) => {
   const hasShell = useContext(ShellContext)
-
   if (hasShell) return <>{children}</>
 
   return (
@@ -320,13 +398,25 @@ export const LayoutBase = ({ children, siteInfo }) => {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{siteInfo?.title || 'Journal'}</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </Head>
       <ThemeFonts />
-      <Header siteInfo={siteInfo} />
-      <main className="utrecht-main">{children}</main>
-      <Footer siteInfo={siteInfo} />
+      <SiteHeader siteInfo={siteInfo} />
+      <hr className="u-divider" />
+      <div className="u-page-wrap">
+        {/* Left rotated label */}
+        <div className="u-left-label">
+          <div className="u-left-label-inner">
+            <span className="u-left-label-text">
+              {siteInfo?.title || 'Journal'}
+            </span>
+          </div>
+        </div>
+        {/* Content */}
+        <div className="u-content">
+          {children}
+          <SiteFooter siteInfo={siteInfo} />
+        </div>
+      </div>
     </ShellContext.Provider>
   )
 }
@@ -334,33 +424,21 @@ export const LayoutBase = ({ children, siteInfo }) => {
 // ─── LayoutIndex (Home) ───────────────────────────────────────────────────────
 export const LayoutIndex = (props) => {
   const { siteInfo } = props
-  const coverImage = siteInfo?.pageCover || siteInfo?.pageCoverThumbnail
+  const cover = siteInfo?.pageCover || siteInfo?.pageCoverThumbnail
 
   return (
     <LayoutBase {...props}>
-      {coverImage ? (
-        <img
-          src={coverImage}
-          alt={siteInfo?.title}
-          className="utrecht-home-cover"
-        />
+      {cover ? (
+        <img src={cover} alt="" className="u-home-img u-fade" />
       ) : (
         <div style={{
-          width: '100%',
-          height: '60vh',
-          background: '#f0ede8',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          width: '100%', height: '55vh',
+          background: '#fafafa',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-          <p style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: '0.8rem',
-            letterSpacing: '0.2em',
-            color: '#aaa'
-          }}>
-            在 Notion 数据库里设置封面图即可显示
-          </p>
+          <span style={{ fontSize: '10px', color: '#ccc', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            Set a cover image in your Notion database
+          </span>
         </div>
       )}
     </LayoutBase>
@@ -372,56 +450,41 @@ export const LayoutPostList = (props) => {
   const { posts, category, tag } = props
   const router = useRouter()
 
-  // 首页交给 LayoutIndex 处理，这里直接返回空
   if (!category && !tag && router.asPath === '/') {
     return <LayoutBase {...props}><></></LayoutBase>
   }
 
-  const isPhotoSection =
+  const isPhoto =
     category?.toLowerCase() === 'photo' ||
     tag?.toLowerCase() === 'photo' ||
     router.asPath.toLowerCase().includes('/category/photo')
 
-  if (isPhotoSection) {
-    return (
-      <LayoutBase {...props}>
-        <PhotoGrid posts={posts} />
-      </LayoutBase>
-    )
-  }
-
   return (
     <LayoutBase {...props}>
-      <BlogList posts={posts} />
+      {isPhoto ? <PhotoGrid posts={posts} /> : <BlogList posts={posts} />}
     </LayoutBase>
   )
 }
 
 // ─── Photo Grid ───────────────────────────────────────────────────────────────
 const PhotoGrid = ({ posts }) => {
-  const photoPosts = posts?.filter(p => p?.pageCover || p?.pageCoverThumbnail) || []
+  const items = posts?.filter(p => p?.pageCover || p?.pageCoverThumbnail) || []
 
-  if (!photoPosts.length) {
+  if (!items.length) {
     return (
-      <div style={{ padding: '8rem 3rem', textAlign: 'center' }}>
-        <p className="utrecht-summary">No photos yet.</p>
+      <div style={{ padding: '60px 40px' }}>
+        <p style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em' }}>No photos yet.</p>
       </div>
     )
   }
 
   return (
-    <div className="utrecht-photo-grid utrecht-fade">
-      {photoPosts.map((post) => (
-        <Link key={post.id} href={`/${post.slug}`} style={{ display: 'block' }}>
-          <div className="utrecht-photo-item">
-            <img
-              src={post.pageCoverThumbnail || post.pageCover}
-              alt={post.title}
-              loading="lazy"
-            />
-            <div className="utrecht-photo-overlay">
-              <span className="utrecht-photo-label">{post.title}</span>
-            </div>
+    <div className="u-photo-grid u-fade">
+      {items.map(post => (
+        <Link key={post.id} href={`/${post.slug}`}>
+          <div className="u-photo-cell">
+            <img src={post.pageCoverThumbnail || post.pageCover} alt={post.title} loading="lazy" />
+            <div className="u-photo-caption">{post.title}</div>
           </div>
         </Link>
       ))}
@@ -431,74 +494,52 @@ const PhotoGrid = ({ posts }) => {
 
 // ─── Blog List ────────────────────────────────────────────────────────────────
 const BlogList = ({ posts }) => {
-  const blogPosts = posts || []
+  const items = posts || []
 
-  if (!blogPosts.length) {
+  if (!items.length) {
     return (
-      <div style={{ padding: '8rem 3rem', textAlign: 'center' }}>
-        <p className="utrecht-summary">No posts yet.</p>
+      <div style={{ padding: '60px 40px' }}>
+        <p style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em' }}>No posts yet.</p>
       </div>
     )
   }
 
   return (
-    <div className="utrecht-blog-list utrecht-fade">
-      <p className="utrecht-section-label" style={{ marginBottom: '0.5rem' }}>
-        {blogPosts.length} {blogPosts.length === 1 ? 'entry' : 'entries'}
+    <div className="u-blog-wrap u-fade">
+      <p className="u-section-label">
+        {items.length} {items.length === 1 ? 'Entry' : 'Entries'}
       </p>
-      {blogPosts.map((post) => (
-        <Link key={post.id} href={`/${post.slug}`} className="utrecht-blog-item">
-          {(post.pageCoverThumbnail || post.pageCover) && (
-            <img
-              src={post.pageCoverThumbnail || post.pageCover}
-              alt={post.title}
-              className="utrecht-blog-item-thumb"
-              loading="lazy"
-            />
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '0.4rem' }}>
-            <p className="utrecht-blog-item-title">{post.title}</p>
-            {post.summary && (
-              <p className="utrecht-summary" style={{ fontSize: '0.78rem' }}>{post.summary}</p>
-            )}
-            <p className="utrecht-date">{formatDate(post.date)}</p>
-          </div>
+      {items.map(post => (
+        <Link key={post.id} href={`/${post.slug}`} className="u-blog-item">
+          <p className="u-blog-title">{post.title}</p>
+          <p className="u-blog-meta">
+            {post.category && <>{post.category}&nbsp;·&nbsp;</>}
+            {formatDate(post.date)}
+          </p>
         </Link>
       ))}
     </div>
   )
 }
 
-// ─── LayoutSlug (Single Post / Page) ─────────────────────────────────────────
+// ─── LayoutSlug ───────────────────────────────────────────────────────────────
 export const LayoutSlug = (props) => {
   const { post } = props
+  if (!post) return <Layout404 {...props} />
 
-  if (!post) {
-    return <Layout404 {...props} />
-  }
-
-  // 兼容不同版本 NotionNext 的 blockMap 位置
   const blockMap = props.blockMap || post.blockMap || post.content
-
   const isAbout = post.slug === 'about' || post.type === 'Page'
 
   return (
     <LayoutBase {...props}>
-      <article className={`${isAbout ? 'utrecht-about' : 'utrecht-post'} utrecht-fade`}>
-        <div style={{ marginBottom: '2.5rem' }}>
-          {!isAbout && post.category && (
-            <p className="utrecht-section-label" style={{ marginBottom: '0.8rem' }}>
-              {post.category}
-            </p>
-          )}
-          <h1 className="utrecht-post-title">{post.title}</h1>
-          {!isAbout && (
-            <p className="utrecht-date" style={{ marginTop: '0.8rem' }}>
-              {formatDate(post.date)}
-            </p>
-          )}
-        </div>
-
+      <div className="u-post-wrap u-fade">
+        {!isAbout && post.category && (
+          <p className="u-post-eyebrow">{post.category}</p>
+        )}
+        <h1 className="u-post-title">{post.title}</h1>
+        {!isAbout && (
+          <p className="u-post-date">{formatDate(post.date)}</p>
+        )}
         {blockMap ? (
           <div className="notion">
             <NotionRenderer
@@ -509,14 +550,13 @@ export const LayoutSlug = (props) => {
             />
           </div>
         ) : (
-          <p className="utrecht-summary" style={{ color: '#bbb' }}>正文加载中…</p>
+          <p style={{ fontSize: '11px', color: '#bbb' }}>Loading…</p>
         )}
-      </article>
+      </div>
     </LayoutBase>
   )
 }
 
-// ─── LayoutCategory / Tag ─────────────────────────────────────────────────────
 export const LayoutCategory = (props) => <LayoutPostList {...props} />
 export const LayoutTag      = (props) => <LayoutPostList {...props} />
 
@@ -525,35 +565,31 @@ export const LayoutSearch = (props) => {
   const { posts, keyword } = props
   const [query, setQuery] = useState(keyword || '')
 
-  const filtered = posts?.filter(
-    (p) =>
-      p.title?.toLowerCase().includes(query.toLowerCase()) ||
-      p.summary?.toLowerCase().includes(query.toLowerCase())
+  const filtered = posts?.filter(p =>
+    p.title?.toLowerCase().includes(query.toLowerCase()) ||
+    p.summary?.toLowerCase().includes(query.toLowerCase())
   )
 
   return (
     <LayoutBase {...props}>
-      <div className="utrecht-blog-list">
-        <div style={{ marginBottom: '3rem' }}>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="search"
-            style={{
-              width: '100%',
-              border: 'none',
-              borderBottom: '1px solid #ccc',
-              background: 'transparent',
-              padding: '0.5rem 0',
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: '1.2rem',
-              letterSpacing: '0.05em',
-              color: '#111',
-              outline: 'none'
-            }}
-          />
-        </div>
+      <div className="u-blog-wrap">
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search"
+          style={{
+            width: '100%', border: 'none',
+            borderBottom: `1px solid ${RED}`,
+            background: 'transparent',
+            padding: '6px 0',
+            fontSize: '13px',
+            color: '#000',
+            outline: 'none',
+            marginBottom: '32px',
+            fontFamily: 'inherit'
+          }}
+        />
         {query && <BlogList posts={filtered} />}
       </div>
     </LayoutBase>
@@ -563,41 +599,29 @@ export const LayoutSearch = (props) => {
 // ─── LayoutArchive ────────────────────────────────────────────────────────────
 export const LayoutArchive = (props) => {
   const { archivePosts } = props
-
   return (
     <LayoutBase {...props}>
-      <div className="utrecht-blog-list">
-        <p className="utrecht-section-label" style={{ marginBottom: '2rem' }}>Archive</p>
-        {archivePosts &&
-          Object.keys(archivePosts)
-            .sort((a, b) => b - a)
-            .map((year) => (
-              <div key={year} style={{ marginBottom: '2.5rem' }}>
-                <p className="utrecht-section-label" style={{ marginBottom: '1rem', color: '#888' }}>
-                  {year}
-                </p>
-                {archivePosts[year].map((post) => (
-                  <Link
-                    key={post.id}
-                    href={`/${post.slug}`}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
-                      padding: '0.6rem 0',
-                      borderBottom: '1px solid #f0f0f0',
-                      textDecoration: 'none',
-                      color: 'inherit'
-                    }}
-                  >
-                    <span className="utrecht-blog-item-title" style={{ fontSize: '0.92rem' }}>
-                      {post.title}
-                    </span>
-                    <span className="utrecht-date">{formatDate(post.date)}</span>
-                  </Link>
-                ))}
-              </div>
+      <div className="u-blog-wrap">
+        <p className="u-section-label" style={{ marginBottom: '32px' }}>Archive</p>
+        {archivePosts && Object.keys(archivePosts).sort((a,b)=>b-a).map(year => (
+          <div key={year} style={{ marginBottom: '28px' }}>
+            <p style={{ fontSize: '9px', color: RED, letterSpacing: '0.12em', marginBottom: '8px' }}>{year}</p>
+            {archivePosts[year].map(post => (
+              <Link
+                key={post.id}
+                href={`/${post.slug}`}
+                style={{
+                  display: 'flex', justifyContent: 'space-between',
+                  padding: '7px 0', borderBottom: '1px solid #f0f0f0',
+                  fontSize: '13px', color: 'inherit', textDecoration: 'none'
+                }}
+              >
+                <span>{post.title}</span>
+                <span style={{ color: '#bbb', fontSize: '10px' }}>{formatDate(post.date)}</span>
+              </Link>
             ))}
+          </div>
+        ))}
       </div>
     </LayoutBase>
   )
@@ -606,31 +630,16 @@ export const LayoutArchive = (props) => {
 // ─── Layout404 ────────────────────────────────────────────────────────────────
 export const Layout404 = (props) => (
   <LayoutBase {...props}>
-    <div style={{
-      minHeight: '70vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '1.5rem'
-    }}>
-      <p style={{
-        fontFamily: "'Cormorant Garamond', serif",
-        fontSize: '5rem',
-        fontWeight: 300,
-        color: '#e0e0e0',
-        lineHeight: 1
-      }}>
-        404
-      </p>
-      <p className="utrecht-summary">The page you are looking for does not exist.</p>
-      <Link href="/" className="utrecht-nav-item" style={{ marginTop: '1rem' }}>
-        ← return home
+    <div className="u-404">
+      <p className="u-404-num">404</p>
+      <p style={{ fontSize: '11px', color: '#bbb' }}>Page not found.</p>
+      <Link href="/" style={{ fontSize: '11px', color: RED, textDecoration: 'underline', marginTop: '8px' }}>
+        ← Home
       </Link>
     </div>
   </LayoutBase>
 )
 
-// ─── Default export ───────────────────────────────────────────────────────────
 export default LayoutBase
-
+ENDOFFILE
+echo "done"
