@@ -357,7 +357,7 @@ const SiteHeader = ({ siteInfo }) => {
         {/* Logo */}
         <Link href="/" className="u-logo" style={{ textDecoration: 'none' }}>
           <span className="u-logo-wordmark">{siteInfo?.title || 'Journal'}</span>
-          <span className="u-logo-sub">Photography &amp; Writing</span>
+         
         </Link>
 
         {/* Nav */}
