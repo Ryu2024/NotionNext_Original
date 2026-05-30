@@ -244,25 +244,30 @@ export const LayoutBase = ({ children, siteInfo }) => {
   if (hasShell) return <>{children}</>
   return (
     <ShellContext.Provider value={true}>
-      <Head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{siteInfo?.title || 'Journal'}</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </Head>
-      <ThemeFonts />
-      <SiteHeader siteInfo={siteInfo} />
-      <hr className="u-divider" />
-      <div className="u-page-wrap">
-        <div className="u-left-label">
-          <div className="u-left-label-inner">
-            <span className="u-left-label-text">{siteInfo?.title || 'Journal'}</span>
+      {/* 这个 id="theme-utrecht" 必须保留：NotionNext 的 fixThemeDOM 靠
+          querySelectorAll('[id^="theme-"]') 识别并删除重复渲染的外壳。
+          缺了它，动态 import 拆 chunk 导致的双壳就无法被清理（手机端尤其明显）。*/}
+      <div id="theme-utrecht">
+        <Head>
+          <meta charSet="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>{siteInfo?.title || 'Journal'}</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        </Head>
+        <ThemeFonts />
+        <SiteHeader siteInfo={siteInfo} />
+        <hr className="u-divider" />
+        <div className="u-page-wrap">
+          <div className="u-left-label">
+            <div className="u-left-label-inner">
+              <span className="u-left-label-text">{siteInfo?.title || 'Journal'}</span>
+            </div>
           </div>
-        </div>
-        <div className="u-content">
-          {children}
-          <SiteFooter siteInfo={siteInfo} />
+          <div className="u-content">
+            {children}
+            <SiteFooter siteInfo={siteInfo} />
+          </div>
         </div>
       </div>
     </ShellContext.Provider>
