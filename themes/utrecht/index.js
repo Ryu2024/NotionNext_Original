@@ -382,7 +382,7 @@ export const LayoutSlug = (props) => {
       return cat === slug || tags.includes(slug)
     })
 
-    // photo 兜底：没有 category 命中时，凡是带封面图的都算
+    // photo 兜底：没有 category 命中时，凡是带封面图的都算。
     if (slug === 'photo' && !items.length) {
       items = source.filter((p) => p.pageCover || p.pageCoverThumbnail)
     }
