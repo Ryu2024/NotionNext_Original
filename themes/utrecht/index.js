@@ -2,11 +2,12 @@
  * Utrecht Theme for NotionNext
  * Modelled after utrecht.jp
  *
- * Changes:
- * - Body text red (#e8001d)
- * - Site title uses Shippori Mincho (明体)
- * - No subtitle
- * - Nav paths: /photo and /blog (handled via LayoutSlug slug detection)
+ * Key fix: /photo and /blog are Page-slug routes that render through
+ * LayoutSlug. NotionNext does NOT pass a single reliable "all posts"
+ * array there, and latestPosts only contains type=Post. So we MERGE
+ * every possible array (allNavPages / allPages / latestPosts / posts)
+ * and filter by category. This finds your articles whether they are
+ * type=Post or type=Page.
  */
 
 import Head from 'next/head'
@@ -17,7 +18,6 @@ import { NotionRenderer } from 'react-notion-x'
 import React, { createContext, useContext } from 'react'
 
 const ShellContext = createContext(false)
-
 const RED = '#e8001d'
 
 export const CONFIG = {
@@ -34,7 +34,22 @@ const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const d = new Date(dateStr?.start_date || dateStr)
   if (isNaN(d)) return ''
-  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+}
+
+// 把 NotionNext 在 slug 页面可能传入的所有文章数组合并去重
+const collectAllPosts = (props) => {
+  const merged = []
+  ;['allNavPages', 'allPages', 'allPosts', 'posts', 'latestPosts'].forEach((key) => {
+    if (Array.isArray(props[key])) merged.push(...props[key])
+  })
+  const seen = new Set()
+  return merged.filter((p) => {
+    if (!p || !p.id || seen.has(p.id)) return false
+    seen.add(p.id)
+    const s = (p.slug || '').toLowerCase()
+    return s !== 'photo' && s !== 'blog' && s !== 'about'
+  })
 }
 
 // ─── Global CSS ───────────────────────────────────────────────────────────────
@@ -58,233 +73,97 @@ const ThemeFonts = () => (
     a { color: inherit; text-decoration: none; }
     img { display: block; max-width: 100%; }
 
-    /* ── Header ── */
-    .u-header {
-      border-bottom: 1px solid #e0e0e0;
-    }
+    .u-header { border-bottom: 1px solid #e0e0e0; }
+    .u-header-top { display: flex; align-items: center; padding: 18px 32px; }
 
-    .u-header-top {
-      display: flex;
-      align-items: center;
-      padding: 18px 32px;
-    }
-
-    .u-logo {
-      margin-right: 40px;
-      flex-shrink: 0;
-      text-decoration: none;
-    }
-
+    .u-logo { margin-right: 40px; flex-shrink: 0; text-decoration: none; }
     .u-logo-wordmark {
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'MS Mincho', Georgia, serif;
-      font-size: 22px;
-      font-weight: 700;
-      color: ${RED};
-      letter-spacing: 0.05em;
-      line-height: 1;
-      display: block;
+      font-size: 22px; font-weight: 700; color: ${RED};
+      letter-spacing: 0.05em; line-height: 1; display: block;
     }
 
-    .u-nav-row {
-      display: flex;
-      align-items: center;
-      flex: 1;
-      gap: 28px;
-      flex-wrap: wrap;
-    }
-
+    .u-nav-row { display: flex; align-items: center; flex: 1; gap: 28px; flex-wrap: wrap; }
     .u-nav-link {
-      font-size: 12px;
-      color: ${RED};
-      letter-spacing: 0.01em;
-      white-space: nowrap;
-      padding: 3px 0;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.15s;
+      font-size: 12px; color: ${RED}; letter-spacing: 0.01em;
+      white-space: nowrap; padding: 3px 0;
+      border-bottom: 1px solid transparent; transition: border-color 0.15s;
     }
-
     .u-nav-link:hover { border-bottom-color: ${RED}; }
     .u-nav-link.active { font-weight: 700; border-bottom-color: ${RED}; }
 
-    /* ── Page layout ── */
-    .u-page-wrap {
-      display: flex;
-      position: relative;
-    }
-
-    .u-left-label {
-      width: 36px;
-      flex-shrink: 0;
-      position: relative;
-    }
-
+    .u-page-wrap { display: flex; position: relative; }
+    .u-left-label { width: 36px; flex-shrink: 0; position: relative; }
     .u-left-label-inner {
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: sticky; top: 0; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
     }
-
     .u-left-label-text {
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      transform: rotate(180deg);
+      writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-      font-size: 9px;
-      color: ${RED};
-      letter-spacing: 0.15em;
-      white-space: nowrap;
-      line-height: 1;
+      font-size: 9px; color: ${RED}; letter-spacing: 0.15em; white-space: nowrap; line-height: 1;
     }
 
-    .u-divider {
-      border: none;
-      border-top: 1px solid #e0e0e0;
-      margin: 0;
-    }
+    .u-divider { border: none; border-top: 1px solid #e0e0e0; margin: 0; }
+    .u-content { flex: 1; min-width: 0; border-left: 1px solid #e0e0e0; }
 
-    .u-content {
-      flex: 1;
-      min-width: 0;
-      border-left: 1px solid #e0e0e0;
-    }
+    .u-home-img { width: 100%; height: auto; display: block; }
 
-    /* ── Home ── */
-    .u-home-img {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    /* ── Photo grid ── */
     .u-photo-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1px;
-      background: #e0e0e0;
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 1px; background: #e0e0e0;
     }
-
-    @media (min-width: 1000px) {
-      .u-photo-grid { grid-template-columns: repeat(3, 1fr); }
-    }
+    @media (min-width: 1000px) { .u-photo-grid { grid-template-columns: repeat(3, 1fr); } }
 
     .u-photo-cell {
-      position: relative;
-      overflow: hidden;
-      aspect-ratio: 3/2;
-      background: #f5f5f5;
+      position: relative; overflow: hidden; aspect-ratio: 3/2; background: #f5f5f5;
     }
-
     .u-photo-cell img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transition: opacity 0.3s;
+      width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s;
     }
-
     .u-photo-cell:hover img { opacity: 0.85; }
-
     .u-photo-caption {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      padding: 10px 12px;
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 12px;
+      font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
       color: rgba(255,255,255,0);
-      background: linear-gradient(transparent, rgba(0,0,0,0.4));
-      transition: color 0.25s;
+      background: linear-gradient(transparent, rgba(0,0,0,0.4)); transition: color 0.25s;
     }
-
     .u-photo-cell:hover .u-photo-caption { color: rgba(255,255,255,0.9); }
 
-    /* ── Blog list ── */
-    .u-blog-wrap {
-      padding: 40px 40px 80px;
-      max-width: 680px;
-    }
-
+    .u-blog-wrap { padding: 40px 40px 80px; max-width: 680px; }
     .u-section-label {
-      font-size: 9px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: ${RED};
-      margin-bottom: 24px;
+      font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: ${RED}; margin-bottom: 24px;
     }
-
     .u-blog-item {
-      display: block;
-      padding: 14px 0;
-      border-bottom: 1px solid #f0e0e0;
-      text-decoration: none;
-      color: inherit;
+      display: block; padding: 14px 0; border-bottom: 1px solid #f0e0e0;
+      text-decoration: none; color: inherit;
     }
-
     .u-blog-item:first-of-type { border-top: 1px solid #f0e0e0; }
-
     .u-blog-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: ${RED};
-      margin-bottom: 3px;
-      transition: opacity 0.15s;
+      font-size: 13px; font-weight: 700; color: ${RED};
+      margin-bottom: 3px; transition: opacity 0.15s;
     }
-
     .u-blog-item:hover .u-blog-title { opacity: 0.55; }
+    .u-blog-meta { font-size: 10px; color: #e88080; letter-spacing: 0.04em; }
 
-    .u-blog-meta {
-      font-size: 10px;
-      color: #e88080;
-      letter-spacing: 0.04em;
-    }
-
-    /* ── Post / About ── */
-    .u-post-wrap {
-      padding: 40px 40px 80px;
-      max-width: 660px;
-    }
-
+    .u-post-wrap { padding: 40px 40px 80px; max-width: 660px; }
     .u-post-eyebrow {
-      font-size: 9px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: ${RED};
-      margin-bottom: 12px;
+      font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: ${RED}; margin-bottom: 12px;
     }
-
     .u-post-title {
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: ${RED};
-      line-height: 1.35;
-      margin-bottom: 6px;
+      font-size: 18px; font-weight: 700; color: ${RED}; line-height: 1.35; margin-bottom: 6px;
     }
+    .u-post-date { font-size: 10px; color: #e88080; letter-spacing: 0.04em; margin-bottom: 36px; }
 
-    .u-post-date {
-      font-size: 10px;
-      color: #e88080;
-      letter-spacing: 0.04em;
-      margin-bottom: 36px;
-    }
-
-    /* ── Notion content overrides ── */
-    .notion {
-      font-size: 13px;
-      line-height: 1.8;
-      color: ${RED};
-    }
-
+    .notion { font-size: 13px; line-height: 1.8; color: ${RED}; }
     .notion .notion-page-title { display: none; }
-
     .notion h1, .notion h2, .notion h3 {
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-      font-weight: 700;
-      color: ${RED};
-      margin: 24px 0 8px;
+      font-weight: 700; color: ${RED}; margin: 24px 0 8px;
     }
-
     .notion h1 { font-size: 16px; }
     .notion h2 { font-size: 14px; }
     .notion h3 { font-size: 13px; }
@@ -292,33 +171,14 @@ const ThemeFonts = () => (
     .notion a  { color: ${RED}; text-decoration: underline; text-underline-offset: 2px; }
     .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
 
-    /* ── Footer ── */
     .u-footer {
-      border-top: 1px solid #e0e0e0;
-      padding: 20px 40px;
-      font-size: 10px;
-      color: #e88080;
-      display: flex;
-      justify-content: space-between;
-      letter-spacing: 0.04em;
+      border-top: 1px solid #e0e0e0; padding: 20px 40px; font-size: 10px;
+      color: #e88080; display: flex; justify-content: space-between; letter-spacing: 0.04em;
     }
 
-    /* ── 404 ── */
-    .u-404 {
-      padding: 80px 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .u-404 { padding: 80px 40px; display: flex; flex-direction: column; gap: 12px; }
+    .u-404-num { font-size: 60px; font-weight: 800; color: #fce0e0; line-height: 1; }
 
-    .u-404-num {
-      font-size: 60px;
-      font-weight: 800;
-      color: #fce0e0;
-      line-height: 1;
-    }
-
-    /* ── Mobile ── */
     @media (max-width: 680px) {
       .u-header-top { padding: 14px 16px; }
       .u-logo-wordmark { font-size: 17px; }
@@ -340,11 +200,7 @@ const ThemeFonts = () => (
 const SiteHeader = ({ siteInfo }) => {
   const router = useRouter()
   const path = router.asPath
-
-  const isActive = (p) => {
-    if (p === '/') return path === '/'
-    return path.startsWith(p)
-  }
+  const isActive = (p) => (p === '/' ? path === '/' : path.startsWith(p))
 
   return (
     <header className="u-header">
@@ -353,7 +209,7 @@ const SiteHeader = ({ siteInfo }) => {
           <span className="u-logo-wordmark">{siteInfo?.title || 'Journal'}</span>
         </Link>
         <nav className="u-nav-row">
-          {CONFIG.NAV_TABS.map(tab => (
+          {CONFIG.NAV_TABS.map((tab) => (
             <Link
               key={tab.path}
               href={tab.path}
@@ -420,8 +276,7 @@ export const LayoutIndex = (props) => {
         <img src={cover} alt="" className="u-home-img u-fade" />
       ) : (
         <div style={{
-          width: '100%', height: '55vh',
-          background: '#fff5f5',
+          width: '100%', height: '55vh', background: '#fff5f5',
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <span style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
@@ -438,9 +293,8 @@ export const LayoutPostList = (props) => {
   const { posts, category, tag } = props
   const router = useRouter()
 
-  if (!category && !tag && router.asPath === '/') {
-    return null
-  }
+  // 首页交给 LayoutIndex，这里不渲染任何东西（返回 null 避免重复 header/footer）
+  if (!category && !tag && router.asPath === '/') return null
 
   const isPhoto =
     category?.toLowerCase() === 'photo' ||
@@ -456,8 +310,7 @@ export const LayoutPostList = (props) => {
 
 // ─── Photo Grid ───────────────────────────────────────────────────────────────
 const PhotoGrid = ({ posts }) => {
-  const items = posts?.filter(p => p?.pageCover || p?.pageCoverThumbnail) || []
-
+  const items = posts?.filter((p) => p?.pageCover || p?.pageCoverThumbnail) || []
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
@@ -465,10 +318,9 @@ const PhotoGrid = ({ posts }) => {
       </div>
     )
   }
-
   return (
     <div className="u-photo-grid u-fade">
-      {items.map(post => (
+      {items.map((post) => (
         <Link key={post.id} href={`/${post.slug}`}>
           <div className="u-photo-cell">
             <img src={post.pageCoverThumbnail || post.pageCover} alt={post.title} loading="lazy" />
@@ -483,7 +335,6 @@ const PhotoGrid = ({ posts }) => {
 // ─── Blog List ────────────────────────────────────────────────────────────────
 const BlogList = ({ posts }) => {
   const items = posts || []
-
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
@@ -491,13 +342,10 @@ const BlogList = ({ posts }) => {
       </div>
     )
   }
-
   return (
     <div className="u-blog-wrap u-fade">
-      <p className="u-section-label">
-        {items.length} {items.length === 1 ? 'Entry' : 'Entries'}
-      </p>
-      {items.map(post => (
+      <p className="u-section-label">{items.length} {items.length === 1 ? 'Entry' : 'Entries'}</p>
+      {items.map((post) => (
         <Link key={post.id} href={`/${post.slug}`} className="u-blog-item">
           <p className="u-blog-title">{post.title}</p>
           <p className="u-blog-meta">
@@ -511,47 +359,53 @@ const BlogList = ({ posts }) => {
 }
 
 // ─── LayoutSlug ───────────────────────────────────────────────────────────────
-// Handles /photo and /blog as special slugs that render grid/list views
 export const LayoutSlug = (props) => {
   const { post } = props
+  const slug = (post?.slug || props.slug || '').toLowerCase()
 
-  // Collect all posts from every possible prop name NotionNext might use
-  const source = (
-    props.allPosts ||
-    props.posts ||
-    props.latestPosts ||
-    props.allPages ||
-    []
-  ).filter(p => p && p.slug !== 'photo' && p.slug !== 'blog' && p.slug !== 'about')
+  // 区块页：/photo 与 /blog
+  if (slug === 'photo' || slug === 'blog') {
+    const source = collectAllPosts(props)
 
-  // Special slug: /photo
-  if (post?.slug === 'photo' || (!post && props.slug === 'photo')) {
-    const photoItems = source.filter(p =>
-      p?.category?.toLowerCase() === 'photo' ||
-      p?.tags?.some(t => t?.toLowerCase() === 'photo') ||
-      p?.pageCover ||
-      p?.pageCoverThumbnail
-    )
+    let items = source.filter((p) => {
+      const cat = (p.category || '').toString().toLowerCase()
+      const tags = (p.tags || []).map((t) => (t || '').toString().toLowerCase())
+      return cat === slug || tags.includes(slug)
+    })
+
+    // photo 兜底：没有 category 命中时，凡是带封面图的都算
+    if (slug === 'photo' && !items.length) {
+      items = source.filter((p) => p.pageCover || p.pageCoverThumbnail)
+    }
+
+    // 仍为空 → 输出诊断信息（确认问题后可删掉这段）
+    if (!items.length) {
+      const cats = [...new Set(source.map((p) => p.category).filter(Boolean))].join(', ')
+      return (
+        <LayoutBase {...props}>
+          <div className="u-blog-wrap">
+            <p className="u-section-label">No {slug} found · debug</p>
+            <pre style={{ fontSize: '11px', color: '#999', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
+{`allNavPages : ${Array.isArray(props.allNavPages) ? props.allNavPages.length : 'none'}
+allPages    : ${Array.isArray(props.allPages) ? props.allPages.length : 'none'}
+latestPosts : ${Array.isArray(props.latestPosts) ? props.latestPosts.length : 'none'}
+posts       : ${Array.isArray(props.posts) ? props.posts.length : 'none'}
+合并去重后   : ${source.length} 篇
+出现的分类   : ${cats || '(无)'}`}
+            </pre>
+          </div>
+        </LayoutBase>
+      )
+    }
+
     return (
       <LayoutBase {...props}>
-        <PhotoGrid posts={photoItems} />
+        {slug === 'photo' ? <PhotoGrid posts={items} /> : <BlogList posts={items} />}
       </LayoutBase>
     )
   }
 
-  // Special slug: /blog
-  if (post?.slug === 'blog' || (!post && props.slug === 'blog')) {
-    const blogItems = source.filter(p =>
-      p?.category?.toLowerCase() === 'blog' ||
-      p?.tags?.some(t => t?.toLowerCase() === 'blog')
-    )
-    return (
-      <LayoutBase {...props}>
-        <BlogList posts={blogItems.length ? blogItems : source} />
-      </LayoutBase>
-    )
-  }
-
+  // 普通文章 / 单页
   if (!post) return <Layout404 {...props} />
 
   const blockMap = props.blockMap || post.blockMap || post.content
@@ -560,21 +414,12 @@ export const LayoutSlug = (props) => {
   return (
     <LayoutBase {...props}>
       <div className="u-post-wrap u-fade">
-        {!isAbout && post.category && (
-          <p className="u-post-eyebrow">{post.category}</p>
-        )}
+        {!isAbout && post.category && <p className="u-post-eyebrow">{post.category}</p>}
         <h1 className="u-post-title">{post.title}</h1>
-        {!isAbout && (
-          <p className="u-post-date">{formatDate(post.date)}</p>
-        )}
+        {!isAbout && <p className="u-post-date">{formatDate(post.date)}</p>}
         {blockMap ? (
           <div className="notion">
-            <NotionRenderer
-              recordMap={blockMap}
-              fullPage={false}
-              darkMode={false}
-              disableHeader={true}
-            />
+            <NotionRenderer recordMap={blockMap} fullPage={false} darkMode={false} disableHeader={true} />
           </div>
         ) : (
           <p style={{ fontSize: '11px', color: '#e8a0a0' }}>Loading…</p>
@@ -591,30 +436,23 @@ export const LayoutTag      = (props) => <LayoutPostList {...props} />
 export const LayoutSearch = (props) => {
   const { posts, keyword } = props
   const [query, setQuery] = useState(keyword || '')
-
-  const filtered = posts?.filter(p =>
-    p.title?.toLowerCase().includes(query.toLowerCase()) ||
-    p.summary?.toLowerCase().includes(query.toLowerCase())
+  const filtered = posts?.filter(
+    (p) =>
+      p.title?.toLowerCase().includes(query.toLowerCase()) ||
+      p.summary?.toLowerCase().includes(query.toLowerCase())
   )
-
   return (
     <LayoutBase {...props}>
       <div className="u-blog-wrap">
         <input
           type="text"
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search"
           style={{
-            width: '100%', border: 'none',
-            borderBottom: `1px solid ${RED}`,
-            background: 'transparent',
-            padding: '6px 0',
-            fontSize: '13px',
-            color: RED,
-            outline: 'none',
-            marginBottom: '32px',
-            fontFamily: 'inherit'
+            width: '100%', border: 'none', borderBottom: `1px solid ${RED}`,
+            background: 'transparent', padding: '6px 0', fontSize: '13px',
+            color: RED, outline: 'none', marginBottom: '32px', fontFamily: 'inherit'
           }}
         />
         {query && <BlogList posts={filtered} />}
@@ -630,17 +468,16 @@ export const LayoutArchive = (props) => {
     <LayoutBase {...props}>
       <div className="u-blog-wrap">
         <p className="u-section-label" style={{ marginBottom: '32px' }}>Archive</p>
-        {archivePosts && Object.keys(archivePosts).sort((a,b)=>b-a).map(year => (
+        {archivePosts && Object.keys(archivePosts).sort((a, b) => b - a).map((year) => (
           <div key={year} style={{ marginBottom: '28px' }}>
             <p style={{ fontSize: '9px', color: RED, letterSpacing: '0.12em', marginBottom: '8px' }}>{year}</p>
-            {archivePosts[year].map(post => (
+            {archivePosts[year].map((post) => (
               <Link
                 key={post.id}
                 href={`/${post.slug}`}
                 style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  padding: '7px 0', borderBottom: '1px solid #fce8e8',
-                  fontSize: '13px', color: RED, textDecoration: 'none'
+                  display: 'flex', justifyContent: 'space-between', padding: '7px 0',
+                  borderBottom: '1px solid #fce8e8', fontSize: '13px', color: RED, textDecoration: 'none'
                 }}
               >
                 <span>{post.title}</span>
