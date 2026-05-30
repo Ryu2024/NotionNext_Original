@@ -65,7 +65,10 @@ const ThemeFonts = () => (
     a { color: inherit; text-decoration: none; }
     img { display: block; max-width: 100%; }
 
-    .u-header { border-bottom: 1px solid #e0e0e0; }
+    /* 让整个外壳至少撑满一屏，配合 footer 的 margin-top:auto 把页脚顶到底部 */
+    #theme-utrecht { display: flex; flex-direction: column; min-height: 100vh; }
+    /* 问题2：顶部横线改成红色细线 */
+    .u-header { border-bottom: 1px solid ${RED}; }
     .u-header-top { display: flex; align-items: center; padding: 18px 32px; }
     .u-logo { margin-right: 40px; flex-shrink: 0; text-decoration: none; }
     /* 问题1修复：Latin 字形用 Georgia（端正衬线），CJK 回落到明朝体，二者搭配更协调。
@@ -84,7 +87,7 @@ const ThemeFonts = () => (
     .u-nav-link:hover { border-bottom-color: ${RED}; }
     .u-nav-link.active { font-weight: 700; border-bottom-color: ${RED}; }
 
-    .u-page-wrap { display: flex; position: relative; }
+    .u-page-wrap { display: flex; position: relative; flex: 1; }
     /* 问题2修复：去掉 rotate(180deg) 让竖排恢复正向；从顶部开始排、允许多列换行 */
     .u-left-label { width: 48px; flex-shrink: 0; position: relative; }
     .u-left-label-inner {
@@ -98,8 +101,9 @@ const ThemeFonts = () => (
       font-size: 10px; color: ${RED}; letter-spacing: 0.15em; line-height: 1.7;
       max-height: calc(100vh - 72px);
     }
-    .u-divider { border: none; border-top: 1px solid #e0e0e0; margin: 0; }
-    .u-content { flex: 1; min-width: 0; border-left: 1px solid #e0e0e0; }
+    .u-divider { border: none; border-top: 1px solid ${RED}; margin: 0; }
+    /* 问题1：移除左侧竖灰线（原 border-left）；纵向 flex 便于 footer 沉底 */
+    .u-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
     /* ── Home cover ── 等比缩放、跟视口高度挂钩、左对齐留白 */
     .u-home { padding: 36px 40px 64px; }
@@ -112,10 +116,11 @@ const ThemeFonts = () => (
       margin: 0;
     }
 
-    /* 问题3修复：容器背景设为透明，照片少时空轨道不再露灰底（缝隙变白色细线）*/
+    /* 问题3修复：容器背景透明；问题4：加内边距让照片不顶到顶部、四周留白 */
     .u-photo-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
       gap: 1px; background: transparent;
+      padding: 40px 40px 64px;
     }
     @media (min-width: 1000px) { .u-photo-grid { grid-template-columns: repeat(3, 1fr); } }
     .u-photo-cell {
@@ -175,6 +180,7 @@ const ThemeFonts = () => (
     .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
 
     .u-footer {
+      margin-top: auto;
       border-top: 1px solid #e0e0e0; padding: 20px 40px; font-size: 10px;
       color: #e88080; display: flex; justify-content: space-between; letter-spacing: 0.04em;
     }
@@ -191,6 +197,7 @@ const ThemeFonts = () => (
       .u-content { border-left: none; }
       .u-home { padding: 24px 16px 48px; }
       .u-home-img { max-height: calc(100vh - 140px); }
+      .u-photo-grid { padding: 24px 16px 48px; }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
       .u-footer { padding: 16px; flex-direction: column; gap: 6px; }
@@ -224,7 +231,6 @@ const SiteHeader = ({ siteInfo }) => {
           ))}
         </nav>
       </div>
-      <hr className="u-divider" />
     </header>
   )
 }
@@ -255,7 +261,6 @@ export const LayoutBase = ({ children, siteInfo }) => {
         </Head>
         <ThemeFonts />
         <SiteHeader siteInfo={siteInfo} />
-        <hr className="u-divider" />
         <div className="u-page-wrap">
           <div className="u-left-label">
             <div className="u-left-label-inner">
