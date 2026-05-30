@@ -9,7 +9,6 @@
  * and filter by category. This finds your articles whether they are
  * type=Post or type=Page.
  */
-
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -18,14 +17,15 @@ import { NotionRenderer } from 'react-notion-x'
 import React, { createContext, useContext } from 'react'
 
 const ShellContext = createContext(false)
+
 const RED = '#e8001d'
 
 export const CONFIG = {
   THEME_SWITCH: false,
   NAV_TABS: [
-    { label: 'Home',  path: '/' },
+    { label: 'Home', path: '/' },
     { label: 'Photo', path: '/photo' },
-    { label: 'Blog',  path: '/blog' },
+    { label: 'Blog', path: '/blog' },
     { label: 'About', path: '/about' }
   ]
 }
@@ -56,33 +56,28 @@ const collectAllPosts = (props) => {
 const ThemeFonts = () => (
   <style dangerouslySetInnerHTML={{ __html: `
     @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html, body {
       background: #fff;
       color: ${RED};
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial,
-                   'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
       font-size: 13px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
-
     a { color: inherit; text-decoration: none; }
     img { display: block; max-width: 100%; }
 
     .u-header { border-bottom: 1px solid #e0e0e0; }
     .u-header-top { display: flex; align-items: center; padding: 18px 32px; }
-
     .u-logo { margin-right: 40px; flex-shrink: 0; text-decoration: none; }
     .u-logo-wordmark {
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'MS Mincho', Georgia, serif;
       font-size: 22px; font-weight: 700; color: ${RED};
       letter-spacing: 0.05em; line-height: 1; display: block;
     }
-
     .u-nav-row { display: flex; align-items: center; flex: 1; gap: 28px; flex-wrap: wrap; }
     .u-nav-link {
       font-size: 12px; color: ${RED}; letter-spacing: 0.01em;
@@ -103,18 +98,27 @@ const ThemeFonts = () => (
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 9px; color: ${RED}; letter-spacing: 0.15em; white-space: nowrap; line-height: 1;
     }
-
     .u-divider { border: none; border-top: 1px solid #e0e0e0; margin: 0; }
     .u-content { flex: 1; min-width: 0; border-left: 1px solid #e0e0e0; }
 
-    .u-home-img { width: 100%; height: auto; display: block; }
+    /* ── Home cover ─────────────────────────────────────────────
+       套一层带内边距的容器，并让图片以视口高度为约束等比缩放，
+       而不是死死锁在满宽。这样既留白、又能随窗口/缩放重新计算大小。 */
+    .u-home { padding: 36px 40px 64px; }
+    .u-home-img {
+      display: block;
+      width: auto;                      /* 不再锁死满宽 */
+      height: auto;
+      max-width: 100%;                  /* 窄屏不溢出 */
+      max-height: calc(100vh - 180px);  /* 关键：跟视口高度挂钩，随缩放/改窗口自适应 */
+      margin: 0;                        /* 左对齐 → 右侧自然留白，呼应 utrecht */
+    }
 
     .u-photo-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
       gap: 1px; background: #e0e0e0;
     }
     @media (min-width: 1000px) { .u-photo-grid { grid-template-columns: repeat(3, 1fr); } }
-
     .u-photo-cell {
       position: relative; overflow: hidden; aspect-ratio: 3/2; background: #f5f5f5;
     }
@@ -167,8 +171,8 @@ const ThemeFonts = () => (
     .notion h1 { font-size: 16px; }
     .notion h2 { font-size: 14px; }
     .notion h3 { font-size: 13px; }
-    .notion p  { margin-bottom: 10px; }
-    .notion a  { color: ${RED}; text-decoration: underline; text-underline-offset: 2px; }
+    .notion p { margin-bottom: 10px; }
+    .notion a { color: ${RED}; text-decoration: underline; text-underline-offset: 2px; }
     .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
 
     .u-footer {
@@ -186,6 +190,8 @@ const ThemeFonts = () => (
       .u-nav-link { font-size: 11px; }
       .u-left-label { display: none; }
       .u-content { border-left: none; }
+      .u-home { padding: 24px 16px 48px; }
+      .u-home-img { max-height: calc(100vh - 140px); }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
       .u-footer { padding: 16px; flex-direction: column; gap: 6px; }
@@ -201,7 +207,6 @@ const SiteHeader = ({ siteInfo }) => {
   const router = useRouter()
   const path = router.asPath
   const isActive = (p) => (p === '/' ? path === '/' : path.startsWith(p))
-
   return (
     <header className="u-header">
       <div className="u-header-top">
@@ -237,7 +242,6 @@ const SiteFooter = ({ siteInfo }) => (
 export const LayoutBase = ({ children, siteInfo }) => {
   const hasShell = useContext(ShellContext)
   if (hasShell) return <>{children}</>
-
   return (
     <ShellContext.Provider value={true}>
       <Head>
@@ -269,11 +273,12 @@ export const LayoutBase = ({ children, siteInfo }) => {
 export const LayoutIndex = (props) => {
   const { siteInfo } = props
   const cover = siteInfo?.pageCover || siteInfo?.pageCoverThumbnail
-
   return (
     <LayoutBase {...props}>
       {cover ? (
-        <img src={cover} alt="" className="u-home-img u-fade" />
+        <div className="u-home">
+          <img src={cover} alt="" className="u-home-img u-fade" />
+        </div>
       ) : (
         <div style={{
           width: '100%', height: '55vh', background: '#fff5f5',
@@ -292,15 +297,12 @@ export const LayoutIndex = (props) => {
 export const LayoutPostList = (props) => {
   const { posts, category, tag } = props
   const router = useRouter()
-
   // 首页交给 LayoutIndex，这里不渲染任何东西（返回 null 避免重复 header/footer）
   if (!category && !tag && router.asPath === '/') return null
-
   const isPhoto =
     category?.toLowerCase() === 'photo' ||
     tag?.toLowerCase() === 'photo' ||
     router.asPath.toLowerCase().includes('/category/photo')
-
   return (
     <LayoutBase {...props}>
       {isPhoto ? <PhotoGrid posts={posts} /> : <BlogList posts={posts} />}
@@ -366,7 +368,6 @@ export const LayoutSlug = (props) => {
   // 区块页：/photo 与 /blog
   if (slug === 'photo' || slug === 'blog') {
     const source = collectAllPosts(props)
-
     let items = source.filter((p) => {
       const cat = (p.category || '').toString().toLowerCase()
       const tags = (p.tags || []).map((t) => (t || '').toString().toLowerCase())
@@ -390,8 +391,8 @@ export const LayoutSlug = (props) => {
 allPages    : ${Array.isArray(props.allPages) ? props.allPages.length : 'none'}
 latestPosts : ${Array.isArray(props.latestPosts) ? props.latestPosts.length : 'none'}
 posts       : ${Array.isArray(props.posts) ? props.posts.length : 'none'}
-合并去重后   : ${source.length} 篇
-出现的分类   : ${cats || '(无)'}`}
+合并去重后  : ${source.length} 篇
+出现的分类  : ${cats || '(无)'}`}
             </pre>
           </div>
         </LayoutBase>
@@ -407,10 +408,8 @@ posts       : ${Array.isArray(props.posts) ? props.posts.length : 'none'}
 
   // 普通文章 / 单页
   if (!post) return <Layout404 {...props} />
-
   const blockMap = props.blockMap || post.blockMap || post.content
   const isAbout = post.slug === 'about' || post.type === 'Page'
-
   return (
     <LayoutBase {...props}>
       <div className="u-post-wrap u-fade">
@@ -430,7 +429,7 @@ posts       : ${Array.isArray(props.posts) ? props.posts.length : 'none'}
 }
 
 export const LayoutCategory = (props) => <LayoutPostList {...props} />
-export const LayoutTag      = (props) => <LayoutPostList {...props} />
+export const LayoutTag = (props) => <LayoutPostList {...props} />
 
 // ─── LayoutSearch ─────────────────────────────────────────────────────────────
 export const LayoutSearch = (props) => {
