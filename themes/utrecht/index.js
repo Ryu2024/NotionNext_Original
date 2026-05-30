@@ -1,13 +1,6 @@
 /**
  * Utrecht Theme for NotionNext
  * Modelled after utrecht.jp
- *
- * Key fix: /photo and /blog are Page-slug routes that render through
- * LayoutSlug. NotionNext does NOT pass a single reliable "all posts"
- * array there, and latestPosts only contains type=Post. So we MERGE
- * every possible array (allNavPages / allPages / latestPosts / posts)
- * and filter by category. This finds your articles whether they are
- * type=Post or type=Page.
  */
 import Head from 'next/head'
 import Link from 'next/link'
@@ -22,6 +15,8 @@ const RED = '#e8001d'
 
 export const CONFIG = {
   THEME_SWITCH: false,
+  // 左侧竖排文字：留空则自动用站点简介(siteInfo.description)；想固定公告就写在这里
+  SIDE_NOTE: '',
   NAV_TABS: [
     { label: 'Home', path: '/' },
     { label: 'Photo', path: '/photo' },
@@ -73,10 +68,12 @@ const ThemeFonts = () => (
     .u-header { border-bottom: 1px solid #e0e0e0; }
     .u-header-top { display: flex; align-items: center; padding: 18px 32px; }
     .u-logo { margin-right: 40px; flex-shrink: 0; text-decoration: none; }
+    /* 问题1修复：Latin 字形用 Georgia（端正衬线），CJK 回落到明朝体，二者搭配更协调。
+       想换英文字体就改下面这行最前面的 Georgia。*/
     .u-logo-wordmark {
-      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'MS Mincho', Georgia, serif;
+      font-family: Georgia, 'Times New Roman', 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 22px; font-weight: 700; color: ${RED};
-      letter-spacing: 0.05em; line-height: 1; display: block;
+      letter-spacing: 0.04em; line-height: 1; display: block;
     }
     .u-nav-row { display: flex; align-items: center; flex: 1; gap: 28px; flex-wrap: wrap; }
     .u-nav-link {
@@ -88,35 +85,37 @@ const ThemeFonts = () => (
     .u-nav-link.active { font-weight: 700; border-bottom-color: ${RED}; }
 
     .u-page-wrap { display: flex; position: relative; }
-    .u-left-label { width: 36px; flex-shrink: 0; position: relative; }
+    /* 问题2修复：去掉 rotate(180deg) 让竖排恢复正向；从顶部开始排、允许多列换行 */
+    .u-left-label { width: 48px; flex-shrink: 0; position: relative; }
     .u-left-label-inner {
       position: sticky; top: 0; height: 100vh;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: flex-start;
+      padding: 36px 0;
     }
     .u-left-label-text {
-      writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+      writing-mode: vertical-rl; text-orientation: mixed;
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-      font-size: 9px; color: ${RED}; letter-spacing: 0.15em; white-space: nowrap; line-height: 1;
+      font-size: 10px; color: ${RED}; letter-spacing: 0.15em; line-height: 1.7;
+      max-height: calc(100vh - 72px);
     }
     .u-divider { border: none; border-top: 1px solid #e0e0e0; margin: 0; }
     .u-content { flex: 1; min-width: 0; border-left: 1px solid #e0e0e0; }
 
-    /* ── Home cover ─────────────────────────────────────────────
-       套一层带内边距的容器，并让图片以视口高度为约束等比缩放，
-       而不是死死锁在满宽。这样既留白、又能随窗口/缩放重新计算大小。 */
+    /* ── Home cover ── 等比缩放、跟视口高度挂钩、左对齐留白 */
     .u-home { padding: 36px 40px 64px; }
     .u-home-img {
       display: block;
-      width: auto;                      /* 不再锁死满宽 */
+      width: auto;
       height: auto;
-      max-width: 100%;                  /* 窄屏不溢出 */
-      max-height: calc(100vh - 180px);  /* 关键：跟视口高度挂钩，随缩放/改窗口自适应 */
-      margin: 0;                        /* 左对齐 → 右侧自然留白，呼应 utrecht */
+      max-width: 100%;
+      max-height: calc(100vh - 180px);
+      margin: 0;
     }
 
+    /* 问题3修复：容器背景设为透明，照片少时空轨道不再露灰底（缝隙变白色细线）*/
     .u-photo-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 1px; background: #e0e0e0;
+      gap: 1px; background: transparent;
     }
     @media (min-width: 1000px) { .u-photo-grid { grid-template-columns: repeat(3, 1fr); } }
     .u-photo-cell {
@@ -230,11 +229,10 @@ const SiteHeader = ({ siteInfo }) => {
   )
 }
 
-// ─── Footer ───────────────────────────────────────────────────────────────────
+// ─── Footer ─── 问题4：移除 "Powered by Notion"
 const SiteFooter = ({ siteInfo }) => (
   <footer className="u-footer">
     <span>© {new Date().getFullYear()} {siteInfo?.title || ''}</span>
-    <span>Powered by Notion</span>
   </footer>
 )
 
@@ -242,11 +240,11 @@ const SiteFooter = ({ siteInfo }) => (
 export const LayoutBase = ({ children, siteInfo }) => {
   const hasShell = useContext(ShellContext)
   if (hasShell) return <>{children}</>
+  // 左侧竖排内容：优先 CONFIG.SIDE_NOTE，其次站点简介
+  const sideNote = CONFIG.SIDE_NOTE || siteInfo?.description || ''
   return (
     <ShellContext.Provider value={true}>
-      {/* 这个 id="theme-utrecht" 必须保留：NotionNext 的 fixThemeDOM 靠
-          querySelectorAll('[id^="theme-"]') 识别并删除重复渲染的外壳。
-          缺了它，动态 import 拆 chunk 导致的双壳就无法被清理（手机端尤其明显）。*/}
+      {/* id="theme-utrecht" 必须保留：NotionNext 的 fixThemeDOM 靠它识别并清理重复外壳 */}
       <div id="theme-utrecht">
         <Head>
           <meta charSet="utf-8" />
@@ -261,7 +259,7 @@ export const LayoutBase = ({ children, siteInfo }) => {
         <div className="u-page-wrap">
           <div className="u-left-label">
             <div className="u-left-label-inner">
-              <span className="u-left-label-text">{siteInfo?.title || 'Journal'}</span>
+              {sideNote ? <span className="u-left-label-text">{sideNote}</span> : null}
             </div>
           </div>
           <div className="u-content">
@@ -290,7 +288,7 @@ export const LayoutIndex = (props) => {
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <span style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Set a cover image in your Notion database
+            Set a cover image
           </span>
         </div>
       )}
@@ -321,7 +319,7 @@ const PhotoGrid = ({ posts }) => {
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
-        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>No photos yet.</p>
+        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>暂无照片</p>
       </div>
     )
   }
@@ -345,7 +343,7 @@ const BlogList = ({ posts }) => {
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
-        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>No posts yet.</p>
+        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>暂无文章</p>
       </div>
     )
   }
@@ -382,26 +380,6 @@ export const LayoutSlug = (props) => {
     // photo 兜底：没有 category 命中时，凡是带封面图的都算
     if (slug === 'photo' && !items.length) {
       items = source.filter((p) => p.pageCover || p.pageCoverThumbnail)
-    }
-
-    // 仍为空 → 输出诊断信息（确认问题后可删掉这段）
-    if (!items.length) {
-      const cats = [...new Set(source.map((p) => p.category).filter(Boolean))].join(', ')
-      return (
-        <LayoutBase {...props}>
-          <div className="u-blog-wrap">
-            <p className="u-section-label">No {slug} found · debug</p>
-            <pre style={{ fontSize: '11px', color: '#999', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
-{`allNavPages : ${Array.isArray(props.allNavPages) ? props.allNavPages.length : 'none'}
-allPages    : ${Array.isArray(props.allPages) ? props.allPages.length : 'none'}
-latestPosts : ${Array.isArray(props.latestPosts) ? props.latestPosts.length : 'none'}
-posts       : ${Array.isArray(props.posts) ? props.posts.length : 'none'}
-合并去重后  : ${source.length} 篇
-出现的分类  : ${cats || '(无)'}`}
-            </pre>
-          </div>
-        </LayoutBase>
-      )
     }
 
     return (
