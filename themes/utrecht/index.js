@@ -491,4 +491,10 @@ export const Layout404 = (props) => (
   </LayoutBase>
 )
 
+export const LayoutTagIndex = (props) => <LayoutPostList {...props} />
+export const LayoutCategoryIndex = (props) => <LayoutPostList {...props} />
+export const LayoutAuth = (props) => <Layout404 {...props} />
+export const LayoutSignIn = (props) => <Layout404 {...props} />
+export const LayoutSignUp = (props) => <Layout404 {...props} />
+export const LayoutDashboard = (props) => <Layout404 {...props} />
 export default LayoutBase
