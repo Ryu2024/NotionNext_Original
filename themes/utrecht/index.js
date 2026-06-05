@@ -1,18 +1,13 @@
 /**
- * Utrecht Theme for NotionNext — Fixed Version
+ * Utrecht Theme for NotionNext
+ * Modelled after utrecht.jp
  */
-import dynamic from 'next/dynamic'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { NotionRenderer } from 'react-notion-x'
 import React, { createContext, useContext } from 'react'
-
-// ✅ Fix 2: 动态导入 NotionRenderer，关闭 SSR
-const NotionRenderer = dynamic(
-  () => import('react-notion-x').then((m) => ({ default: m.NotionRenderer })),
-  { ssr: false }
-)
 
 const ShellContext = createContext(false)
 
@@ -20,6 +15,8 @@ const RED = '#e8001d'
 
 export const CONFIG = {
   THEME_SWITCH: false,
+  // 左侧竖排文字：留空则自动用站点简介(siteInfo.description)；想固定公告就写在这里
+  SIDE_NOTE: '',
   NAV_TABS: [
     { label: 'Home', path: '/' },
     { label: 'Photo', path: '/photo' },
@@ -35,6 +32,7 @@ const formatDate = (dateStr) => {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
+// 把 NotionNext 在 slug 页面可能传入的所有文章数组合并去重
 const collectAllPosts = (props) => {
   const merged = []
   ;['allNavPages', 'allPages', 'allPosts', 'posts', 'latestPosts'].forEach((key) => {
@@ -50,27 +48,35 @@ const collectAllPosts = (props) => {
 }
 
 // ─── Global CSS ───────────────────────────────────────────────────────────────
-
 const ThemeFonts = () => (
   <style dangerouslySetInnerHTML={{ __html: `
     @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      background: #fff; color: ${RED};
+      background: #fff;
+      color: ${RED};
       font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial,
         'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-      font-size: 13px; line-height: 1.6;
-      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+      font-size: 13px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
     a { color: inherit; text-decoration: none; }
     img { display: block; max-width: 100%; }
-    .u-header { border-bottom: 1px solid #e0e0e0; }
+
+    /* 让整个外壳至少撑满一屏，配合 footer 的 margin-top:auto 把页脚顶到底部 */
+    #theme-utrecht { display: flex; flex-direction: column; min-height: 100vh; }
+    /* 问题2：顶部横线改成红色细线 */
+    .u-header { border-bottom: 1px solid ${RED}; }
     .u-header-top { display: flex; align-items: center; padding: 18px 32px; }
     .u-logo { margin-right: 40px; flex-shrink: 0; text-decoration: none; }
+    /* 问题1修复：Latin 字形用 Georgia（端正衬线），CJK 回落到明朝体，二者搭配更协调。
+       想换英文字体就改下面这行最前面的 Georgia。*/
     .u-logo-wordmark {
-      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'MS Mincho', Georgia, serif;
+      font-family: Georgia, 'Times New Roman', 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 22px; font-weight: 700; color: ${RED};
-      letter-spacing: 0.05em; line-height: 1; display: block;
+      letter-spacing: 0.04em; line-height: 1; display: block;
     }
     .u-nav-row { display: flex; align-items: center; flex: 1; gap: 28px; flex-wrap: wrap; }
     .u-nav-link {
@@ -80,27 +86,49 @@ const ThemeFonts = () => (
     }
     .u-nav-link:hover { border-bottom-color: ${RED}; }
     .u-nav-link.active { font-weight: 700; border-bottom-color: ${RED}; }
-    .u-page-wrap { display: flex; position: relative; }
-    .u-left-label { width: 36px; flex-shrink: 0; position: relative; }
+
+    .u-page-wrap { display: flex; position: relative; flex: 1; }
+    /* 问题2修复：去掉 rotate(180deg) 让竖排恢复正向；从顶部开始排、允许多列换行 */
+    .u-left-label { width: 48px; flex-shrink: 0; position: relative; }
     .u-left-label-inner {
       position: sticky; top: 0; height: 100vh;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: flex-start;
+      padding: 36px 0;
     }
     .u-left-label-text {
-      writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+      writing-mode: vertical-rl; text-orientation: mixed;
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-      font-size: 9px; color: ${RED}; letter-spacing: 0.15em; white-space: nowrap; line-height: 1;
+      font-size: 10px; color: ${RED}; letter-spacing: 0.15em; line-height: 1.7;
+      max-height: calc(100vh - 72px);
     }
-    .u-divider { border: none; border-top: 1px solid #e0e0e0; margin: 0; }
-    .u-content { flex: 1; min-width: 0; border-left: 1px solid #e0e0e0; }
-    .u-home-img { width: 100%; height: auto; display: block; }
+    .u-divider { border: none; border-top: 1px solid ${RED}; margin: 0; }
+    /* 问题1：移除左侧竖灰线（原 border-left）；纵向 flex 便于 footer 沉底 */
+    .u-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+    /* ── Home cover ── 等比缩放、跟视口高度挂钩、左对齐留白 */
+    .u-home { padding: 36px 40px 64px; }
+    .u-home-img {
+      display: block;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: calc(100vh - 180px);
+      margin: 0;
+    }
+
+    /* 问题3修复：容器背景透明；问题4：加内边距让照片不顶到顶部、四周留白 */
     .u-photo-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 1px; background: #e0e0e0;
+      gap: 1px; background: transparent;
+      padding: 40px 40px 64px;
     }
     @media (min-width: 1000px) { .u-photo-grid { grid-template-columns: repeat(3, 1fr); } }
-    .u-photo-cell { position: relative; overflow: hidden; aspect-ratio: 3/2; background: #f5f5f5; }
-    .u-photo-cell img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
+    .u-photo-cell {
+      position: relative; overflow: hidden; aspect-ratio: 3/2; background: #f5f5f5;
+    }
+    .u-photo-cell img {
+      width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s;
+    }
     .u-photo-cell:hover img { opacity: 0.85; }
     .u-photo-caption {
       position: absolute; bottom: 0; left: 0; right: 0; padding: 10px 12px;
@@ -109,6 +137,7 @@ const ThemeFonts = () => (
       background: linear-gradient(transparent, rgba(0,0,0,0.4)); transition: color 0.25s;
     }
     .u-photo-cell:hover .u-photo-caption { color: rgba(255,255,255,0.9); }
+
     .u-blog-wrap { padding: 40px 40px 80px; max-width: 680px; }
     .u-section-label {
       font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
@@ -119,16 +148,24 @@ const ThemeFonts = () => (
       text-decoration: none; color: inherit;
     }
     .u-blog-item:first-of-type { border-top: 1px solid #f0e0e0; }
-    .u-blog-title { font-size: 13px; font-weight: 700; color: ${RED}; margin-bottom: 3px; transition: opacity 0.15s; }
+    .u-blog-title {
+      font-size: 13px; font-weight: 700; color: ${RED};
+      margin-bottom: 3px; transition: opacity 0.15s;
+    }
     .u-blog-item:hover .u-blog-title { opacity: 0.55; }
     .u-blog-meta { font-size: 10px; color: #e88080; letter-spacing: 0.04em; }
+
     .u-post-wrap { padding: 40px 40px 80px; max-width: 660px; }
-    .u-post-eyebrow { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: ${RED}; margin-bottom: 12px; }
+    .u-post-eyebrow {
+      font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: ${RED}; margin-bottom: 12px;
+    }
     .u-post-title {
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 18px; font-weight: 700; color: ${RED}; line-height: 1.35; margin-bottom: 6px;
     }
     .u-post-date { font-size: 10px; color: #e88080; letter-spacing: 0.04em; margin-bottom: 36px; }
+
     .notion { font-size: 13px; line-height: 1.8; color: ${RED}; }
     .notion .notion-page-title { display: none; }
     .notion h1, .notion h2, .notion h3 {
@@ -141,12 +178,16 @@ const ThemeFonts = () => (
     .notion p { margin-bottom: 10px; }
     .notion a { color: ${RED}; text-decoration: underline; text-underline-offset: 2px; }
     .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
+
     .u-footer {
+      margin-top: auto;
       border-top: 1px solid #e0e0e0; padding: 20px 40px; font-size: 10px;
       color: #e88080; display: flex; justify-content: space-between; letter-spacing: 0.04em;
     }
+
     .u-404 { padding: 80px 40px; display: flex; flex-direction: column; gap: 12px; }
     .u-404-num { font-size: 60px; font-weight: 800; color: #fce0e0; line-height: 1; }
+
     @media (max-width: 680px) {
       .u-header-top { padding: 14px 16px; }
       .u-logo-wordmark { font-size: 17px; }
@@ -154,22 +195,24 @@ const ThemeFonts = () => (
       .u-nav-link { font-size: 11px; }
       .u-left-label { display: none; }
       .u-content { border-left: none; }
+      .u-home { padding: 24px 16px 48px; }
+      .u-home-img { max-height: calc(100vh - 140px); }
+      .u-photo-grid { padding: 24px 16px 48px; }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
       .u-footer { padding: 16px; flex-direction: column; gap: 6px; }
     }
+
     @keyframes uFade { from { opacity: 0; } to { opacity: 1; } }
     .u-fade { animation: uFade 0.35s ease both; }
   `}} />
 )
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-
 const SiteHeader = ({ siteInfo }) => {
   const router = useRouter()
   const path = router.asPath
-  const isActive = (p) => (p === '/' ? path === '/' || path === '' : path.includes(p))
-
+  const isActive = (p) => (p === '/' ? path === '/' : path.startsWith(p))
   return (
     <header className="u-header">
       <div className="u-header-top">
@@ -188,48 +231,46 @@ const SiteHeader = ({ siteInfo }) => {
           ))}
         </nav>
       </div>
-      <hr className="u-divider" />
     </header>
   )
 }
 
-// ─── Footer ───────────────────────────────────────────────────────────────────
-
+// ─── Footer ─── 问题4：移除 "Powered by Notion"
 const SiteFooter = ({ siteInfo }) => (
   <footer className="u-footer">
     <span>© {new Date().getFullYear()} {siteInfo?.title || ''}</span>
-    <span>Powered by Notion</span>
   </footer>
 )
 
 // ─── LayoutBase ───────────────────────────────────────────────────────────────
-
-export const LayoutBase = ({ children, siteInfo, ...rest }) => {
+export const LayoutBase = ({ children, siteInfo }) => {
   const hasShell = useContext(ShellContext)
-
   if (hasShell) return <>{children}</>
-
+  // 左侧竖排内容：优先 CONFIG.SIDE_NOTE，其次站点简介
+  const sideNote = CONFIG.SIDE_NOTE || siteInfo?.description || ''
   return (
     <ShellContext.Provider value={true}>
-      <Head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{siteInfo?.title || 'Journal'}</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </Head>
-      <ThemeFonts />
-      <SiteHeader siteInfo={siteInfo} />
-      <hr className="u-divider" />
-      <div className="u-page-wrap">
-        <div className="u-left-label">
-          <div className="u-left-label-inner">
-            <span className="u-left-label-text">{siteInfo?.title || 'Journal'}</span>
+      {/* id="theme-utrecht" 必须保留：NotionNext 的 fixThemeDOM 靠它识别并清理重复外壳 */}
+      <div id="theme-utrecht">
+        <Head>
+          <meta charSet="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>{siteInfo?.title || 'Journal'}</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        </Head>
+        <ThemeFonts />
+        <SiteHeader siteInfo={siteInfo} />
+        <div className="u-page-wrap">
+          <div className="u-left-label">
+            <div className="u-left-label-inner">
+              {sideNote ? <span className="u-left-label-text">{sideNote}</span> : null}
+            </div>
           </div>
-        </div>
-        <div className="u-content">
-          {children}
-          <SiteFooter siteInfo={siteInfo} />
+          <div className="u-content">
+            {children}
+            <SiteFooter siteInfo={siteInfo} />
+          </div>
         </div>
       </div>
     </ShellContext.Provider>
@@ -237,22 +278,22 @@ export const LayoutBase = ({ children, siteInfo, ...rest }) => {
 }
 
 // ─── LayoutIndex (Home) ───────────────────────────────────────────────────────
-
 export const LayoutIndex = (props) => {
   const { siteInfo } = props
   const cover = siteInfo?.pageCover || siteInfo?.pageCoverThumbnail
-
   return (
     <LayoutBase {...props}>
       {cover ? (
-        <img src={cover} alt="" className="u-home-img u-fade" />
+        <div className="u-home">
+          <img src={cover} alt="" className="u-home-img u-fade" />
+        </div>
       ) : (
         <div style={{
           width: '100%', height: '55vh', background: '#fff5f5',
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <span style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Set a cover image in your Notion database
+            Set a cover image
           </span>
         </div>
       )}
@@ -261,15 +302,15 @@ export const LayoutIndex = (props) => {
 }
 
 // ─── LayoutPostList ───────────────────────────────────────────────────────────
-
 export const LayoutPostList = (props) => {
   const { posts, category, tag } = props
-
-  // ✅ Fix 3: 用 category/tag 判断而不是依赖 router.asPath
+  const router = useRouter()
+  // 首页交给 LayoutIndex，这里不渲染任何东西（返回 null 避免重复 header/footer）
+  if (!category && !tag && router.asPath === '/') return null
   const isPhoto =
     category?.toLowerCase() === 'photo' ||
-    tag?.toLowerCase() === 'photo'
-
+    tag?.toLowerCase() === 'photo' ||
+    router.asPath.toLowerCase().includes('/category/photo')
   return (
     <LayoutBase {...props}>
       {isPhoto ? <PhotoGrid posts={posts} /> : <BlogList posts={posts} />}
@@ -278,18 +319,15 @@ export const LayoutPostList = (props) => {
 }
 
 // ─── Photo Grid ───────────────────────────────────────────────────────────────
-
 const PhotoGrid = ({ posts }) => {
   const items = posts?.filter((p) => p?.pageCover || p?.pageCoverThumbnail) || []
-
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
-        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>No photos yet.</p>
+        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>暂无照片</p>
       </div>
     )
   }
-
   return (
     <div className="u-photo-grid u-fade">
       {items.map((post) => (
@@ -305,18 +343,15 @@ const PhotoGrid = ({ posts }) => {
 }
 
 // ─── Blog List ────────────────────────────────────────────────────────────────
-
 const BlogList = ({ posts }) => {
   const items = posts || []
-
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
-        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>No posts yet.</p>
+        <p style={{ fontSize: '10px', color: '#e8a0a0', letterSpacing: '0.1em' }}>暂无文章</p>
       </div>
     )
   }
-
   return (
     <div className="u-blog-wrap u-fade">
       <p className="u-section-label">{items.length} {items.length === 1 ? 'Entry' : 'Entries'}</p>
@@ -334,11 +369,11 @@ const BlogList = ({ posts }) => {
 }
 
 // ─── LayoutSlug ───────────────────────────────────────────────────────────────
-
 export const LayoutSlug = (props) => {
   const { post } = props
   const slug = (post?.slug || props.slug || '').toLowerCase()
 
+  // 区块页：/photo 与 /blog
   if (slug === 'photo' || slug === 'blog') {
     const source = collectAllPosts(props)
     let items = source.filter((p) => {
@@ -347,27 +382,9 @@ export const LayoutSlug = (props) => {
       return cat === slug || tags.includes(slug)
     })
 
+    // photo 兜底：没有 category 命中时，凡是带封面图的都算。
     if (slug === 'photo' && !items.length) {
       items = source.filter((p) => p.pageCover || p.pageCoverThumbnail)
-    }
-
-    if (!items.length) {
-      const cats = [...new Set(source.map((p) => p.category).filter(Boolean))].join(', ')
-      return (
-        <LayoutBase {...props}>
-          <div className="u-blog-wrap">
-            <p className="u-section-label">No {slug} found · debug</p>
-            <pre style={{ fontSize: '11px', color: '#999', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
-              {`allNavPages : ${Array.isArray(props.allNavPages) ? props.allNavPages.length : 'none'}
-allPages    : ${Array.isArray(props.allPages) ? props.allPages.length : 'none'}
-latestPosts : ${Array.isArray(props.latestPosts) ? props.latestPosts.length : 'none'}
-posts       : ${Array.isArray(props.posts) ? props.posts.length : 'none'}
-合并去重后  : ${source.length} 篇
-出现的分类  : ${cats || '(无)'}`}
-            </pre>
-          </div>
-        </LayoutBase>
-      )
     }
 
     return (
@@ -377,11 +394,10 @@ posts       : ${Array.isArray(props.posts) ? props.posts.length : 'none'}
     )
   }
 
+  // 普通文章 / 单页
   if (!post) return <Layout404 {...props} />
-
   const blockMap = props.blockMap || post.blockMap || post.content
   const isAbout = post.slug === 'about' || post.type === 'Page'
-
   return (
     <LayoutBase {...props}>
       <div className="u-post-wrap u-fade">
@@ -404,17 +420,14 @@ export const LayoutCategory = (props) => <LayoutPostList {...props} />
 export const LayoutTag = (props) => <LayoutPostList {...props} />
 
 // ─── LayoutSearch ─────────────────────────────────────────────────────────────
-
 export const LayoutSearch = (props) => {
   const { posts, keyword } = props
   const [query, setQuery] = useState(keyword || '')
-
   const filtered = posts?.filter(
     (p) =>
       p.title?.toLowerCase().includes(query.toLowerCase()) ||
       p.summary?.toLowerCase().includes(query.toLowerCase())
   )
-
   return (
     <LayoutBase {...props}>
       <div className="u-blog-wrap">
@@ -436,10 +449,8 @@ export const LayoutSearch = (props) => {
 }
 
 // ─── LayoutArchive ────────────────────────────────────────────────────────────
-
 export const LayoutArchive = (props) => {
   const { archivePosts } = props
-
   return (
     <LayoutBase {...props}>
       <div className="u-blog-wrap">
@@ -468,7 +479,6 @@ export const LayoutArchive = (props) => {
 }
 
 // ─── Layout404 ────────────────────────────────────────────────────────────────
-
 export const Layout404 = (props) => (
   <LayoutBase {...props}>
     <div className="u-404">
@@ -477,31 +487,6 @@ export const Layout404 = (props) => (
       <Link href="/" style={{ fontSize: '11px', color: RED, textDecoration: 'underline', marginTop: '8px' }}>
         ← Home
       </Link>
-    </div>
-  </LayoutBase>
-)
-
-// ✅ Fix 1: 补充缺失的 Layout 导出
-export const LayoutDashboard = (props) => (
-  <LayoutBase {...props}>
-    <div style={{ padding: '60px 40px' }}>
-      <p style={{ fontSize: '13px', color: RED }}>Dashboard</p>
-    </div>
-  </LayoutBase>
-)
-
-export const LayoutSignIn = (props) => (
-  <LayoutBase {...props}>
-    <div style={{ padding: '60px 40px' }}>
-      <p style={{ fontSize: '13px', color: RED }}>Sign In</p>
-    </div>
-  </LayoutBase>
-)
-
-export const LayoutSignUp = (props) => (
-  <LayoutBase {...props}>
-    <div style={{ padding: '60px 40px' }}>
-      <p style={{ fontSize: '13px', color: RED }}>Sign Up</p>
     </div>
   </LayoutBase>
 )
