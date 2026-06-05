@@ -17,7 +17,7 @@ export const CONFIG = {
   THEME_SWITCH: false,
   // 左侧竖排文字：留空则自动用 Notion 中「type 为 Notice」公告文章的正文；想固定公告就写在这里
   SIDE_NOTE: '',
-  // 调试开关：设为 true 后，首页内容区顶部会打印 notice 的诊断信息（排查公告不显示时用，正常上线请保持 false）
+  // 调试开关：设为 true 后，首页内容区顶部会打印 notice 的诊断信息（排查公告问题时用，正常上线请保持 false）
   DEBUG_NOTICE: false,
   NAV_TABS: [
     { label: 'Home', path: '/' },
@@ -50,8 +50,10 @@ const collectAllPosts = (props) => {
 }
 
 // 从 Notice 公告文章中提取【正文纯文本】（跳过标题，按文档顺序拼接各段落）
-// 注意：notice.id 可能是「无连字符」形式，而 blockMap.block 的键是「带连字符」UUID，
-// 因此比较 id 前统一去掉连字符（norm），否则取不到根节点会导致正文为空。
+// 说明：
+//  1) notice.id 可能是「无连字符」形式，而 blockMap.block 的键是「带连字符」UUID，比较前统一 norm。
+//  2) 根节点定位失败时，改用 type==='page' 的块兜底。
+//  3) 最后再做一道安全网：把等于标题/摘要的行剔除，避免标题(如 "Website Notice")泄漏进竖排。
 const getNoticeText = (notice) => {
   const recordMap = notice?.blockMap
   if (!recordMap?.block) return ''
@@ -59,29 +61,41 @@ const getNoticeText = (notice) => {
   const norm = (s) => (s || '').replace(/-/g, '')
   const richToText = (rich) =>
     Array.isArray(rich) ? rich.map((seg) => (Array.isArray(seg) ? seg[0] : '')).join('') : ''
-  const rootKey = Object.keys(blocks).find((k) => norm(k) === norm(notice?.id))
+
+  let rootKey = Object.keys(blocks).find((k) => norm(k) === norm(notice?.id))
+  if (!rootKey) rootKey = Object.keys(blocks).find((k) => blocks[k]?.value?.type === 'page')
+  const rootId = rootKey || notice?.id
+
   const lines = []
   const pushText = (v) => {
     const t = richToText(v?.properties?.title)
     if (t) lines.push(t)
   }
+
   if (rootKey && Array.isArray(blocks[rootKey]?.value?.content)) {
     // 正常路径：从根节点沿 content 递归，按文档顺序取正文（跳过根自身的标题）
     const walk = (id) => {
       const v = blocks[id]?.value
       if (!v) return
-      if (norm(id) !== norm(notice?.id)) pushText(v)
+      if (norm(id) !== norm(rootId)) pushText(v)
       ;(v.content || []).forEach(walk)
     }
     blocks[rootKey].value.content.forEach(walk)
   } else {
-    // 兜底：找不到根节点时，扫描全部区块取文本（顺序可能略有出入，但短公告足够）
+    // 兜底：扫描全部区块取文本（顺序可能略有出入，但短公告足够）
     Object.keys(blocks).forEach((id) => {
-      if (norm(id) === norm(notice?.id)) return
+      if (norm(id) === norm(rootId)) return
       pushText(blocks[id]?.value)
     })
   }
-  return lines.join('\n').trim()
+
+  // 安全网：把标题 / 摘要从正文里剔除，避免泄漏到竖排
+  const titleText = (notice?.title || '').trim()
+  const summaryText = (notice?.summary || '').trim()
+  return lines
+    .map((l) => l.trim())
+    .filter((l) => l && l !== titleText && l !== summaryText)
+    .join('\n')
 }
 
 // ─── Global CSS ───────────────────────────────────────────────────────────────
@@ -326,6 +340,7 @@ export const LayoutBase = (props) => {
   noticeKeys: notice ? Object.keys(notice) : null,
   noticeId: notice?.id || null,
   noticeTitle: notice?.title || null,
+  noticeSummary: notice?.summary || null,
   hasBlockMap: !!(notice && notice.blockMap && notice.blockMap.block),
   blockCount: (notice && notice.blockMap && notice.blockMap.block)
     ? Object.keys(notice.blockMap.block).length : 0,
