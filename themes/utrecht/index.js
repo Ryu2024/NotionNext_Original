@@ -17,6 +17,8 @@ export const CONFIG = {
   THEME_SWITCH: false,
   // 左侧竖排文字：留空则自动用 Notion 中「type 为 Notice」公告文章的正文；想固定公告就写在这里
   SIDE_NOTE: '',
+  // 调试开关：设为 true 后，首页内容区顶部会打印 notice 的诊断信息（排查公告不显示时用，正常上线请保持 false）
+  DEBUG_NOTICE: false,
   NAV_TABS: [
     { label: 'Home', path: '/' },
     { label: 'Photo', path: '/photo' },
@@ -48,25 +50,37 @@ const collectAllPosts = (props) => {
 }
 
 // 从 Notice 公告文章中提取【正文纯文本】（跳过标题，按文档顺序拼接各段落）
+// 注意：notice.id 可能是「无连字符」形式，而 blockMap.block 的键是「带连字符」UUID，
+// 因此比较 id 前统一去掉连字符（norm），否则取不到根节点会导致正文为空。
 const getNoticeText = (notice) => {
   const recordMap = notice?.blockMap
-  const rootId = notice?.id
-  if (!recordMap?.block || !rootId) return ''
+  if (!recordMap?.block) return ''
   const blocks = recordMap.block
+  const norm = (s) => (s || '').replace(/-/g, '')
   const richToText = (rich) =>
     Array.isArray(rich) ? rich.map((seg) => (Array.isArray(seg) ? seg[0] : '')).join('') : ''
-  const walk = (id) => {
-    const value = blocks[id]?.value
-    if (!value) return []
-    const self = richToText(value.properties?.title)
-    const lines = self ? [self] : []
-    ;(value.content || []).forEach((cid) => lines.push(...walk(cid)))
-    return lines
-  }
-  // 跳过根节点(标题本身)，只取它的子块作为正文
-  const childIds = blocks[rootId]?.value?.content || []
+  const rootKey = Object.keys(blocks).find((k) => norm(k) === norm(notice?.id))
   const lines = []
-  childIds.forEach((cid) => lines.push(...walk(cid)))
+  const pushText = (v) => {
+    const t = richToText(v?.properties?.title)
+    if (t) lines.push(t)
+  }
+  if (rootKey && Array.isArray(blocks[rootKey]?.value?.content)) {
+    // 正常路径：从根节点沿 content 递归，按文档顺序取正文（跳过根自身的标题）
+    const walk = (id) => {
+      const v = blocks[id]?.value
+      if (!v) return
+      if (norm(id) !== norm(notice?.id)) pushText(v)
+      ;(v.content || []).forEach(walk)
+    }
+    blocks[rootKey].value.content.forEach(walk)
+  } else {
+    // 兜底：找不到根节点时，扫描全部区块取文本（顺序可能略有出入，但短公告足够）
+    Object.keys(blocks).forEach((id) => {
+      if (norm(id) === norm(notice?.id)) return
+      pushText(blocks[id]?.value)
+    })
+  }
   return lines.join('\n').trim()
 }
 
@@ -128,6 +142,13 @@ const ThemeFonts = () => (
     .u-divider { border: none; border-top: 1px solid ${RED}; margin: 0; }
     /* 问题1：移除左侧竖灰线（原 border-left）；纵向 flex 便于 footer 沉底 */
     .u-content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+    /* 调试用：notice 诊断信息样式 */
+    .u-notice-debug {
+      margin: 16px 40px; padding: 12px 14px; border: 1px dashed ${RED};
+      font-size: 11px; line-height: 1.6; color: #333; background: #fff8f8;
+      white-space: pre-wrap; word-break: break-all; border-radius: 4px;
+    }
 
     /* ── Home cover ── 等比缩放、跟视口高度挂钩、左对齐留白 */
     .u-home { padding: 36px 40px 64px; }
@@ -267,7 +288,8 @@ const SiteFooter = ({ siteInfo }) => (
 )
 
 // ─── LayoutBase ───────────────────────────────────────────────────────────────
-export const LayoutBase = ({ children, siteInfo, notice }) => {
+export const LayoutBase = (props) => {
+  const { children, siteInfo, notice } = props
   const hasShell = useContext(ShellContext)
   if (hasShell) return <>{children}</>
   // 左侧竖排内容：优先 CONFIG.SIDE_NOTE 手动公告，其次取 Notion 中「type 为 Notice」公告文章的【正文】。
@@ -297,6 +319,23 @@ export const LayoutBase = ({ children, siteInfo, notice }) => {
             </div>
           )}
           <div className="u-content">
+            {CONFIG.DEBUG_NOTICE && (
+              <pre className="u-notice-debug">
+{JSON.stringify({
+  hasNotice: !!notice,
+  noticeKeys: notice ? Object.keys(notice) : null,
+  noticeId: notice?.id || null,
+  noticeTitle: notice?.title || null,
+  hasBlockMap: !!(notice && notice.blockMap && notice.blockMap.block),
+  blockCount: (notice && notice.blockMap && notice.blockMap.block)
+    ? Object.keys(notice.blockMap.block).length : 0,
+  blockKeysSample: (notice && notice.blockMap && notice.blockMap.block)
+    ? Object.keys(notice.blockMap.block).slice(0, 5) : null,
+  extractedText: getNoticeText(notice) || null,
+  allPropKeys: Object.keys(props)
+}, null, 2)}
+              </pre>
+            )}
             {children}
             <SiteFooter siteInfo={siteInfo} />
           </div>
