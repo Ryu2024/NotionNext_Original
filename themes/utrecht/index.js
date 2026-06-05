@@ -15,7 +15,7 @@ const RED = '#e8001d'
 
 export const CONFIG = {
   THEME_SWITCH: false,
-  // 左侧竖排文字：留空则自动用 Notion 中「type 为 Notice」的公告文章标题；想固定公告就写在这里
+  // 左侧竖排文字：留空则自动用 Notion 中「type 为 Notice」公告文章的正文；想固定公告就写在这里
   SIDE_NOTE: '',
   NAV_TABS: [
     { label: 'Home', path: '/' },
@@ -45,6 +45,29 @@ const collectAllPosts = (props) => {
     const s = (p.slug || '').toLowerCase()
     return s !== 'photo' && s !== 'blog' && s !== 'about'
   })
+}
+
+// 从 Notice 公告文章中提取【正文纯文本】（跳过标题，按文档顺序拼接各段落）
+const getNoticeText = (notice) => {
+  const recordMap = notice?.blockMap
+  const rootId = notice?.id
+  if (!recordMap?.block || !rootId) return ''
+  const blocks = recordMap.block
+  const richToText = (rich) =>
+    Array.isArray(rich) ? rich.map((seg) => (Array.isArray(seg) ? seg[0] : '')).join('') : ''
+  const walk = (id) => {
+    const value = blocks[id]?.value
+    if (!value) return []
+    const self = richToText(value.properties?.title)
+    const lines = self ? [self] : []
+    ;(value.content || []).forEach((cid) => lines.push(...walk(cid)))
+    return lines
+  }
+  // 跳过根节点(标题本身)，只取它的子块作为正文
+  const childIds = blocks[rootId]?.value?.content || []
+  const lines = []
+  childIds.forEach((cid) => lines.push(...walk(cid)))
+  return lines.join('\n').trim()
 }
 
 // ─── Global CSS ───────────────────────────────────────────────────────────────
@@ -100,6 +123,7 @@ const ThemeFonts = () => (
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 10px; color: ${RED}; letter-spacing: 0.15em; line-height: 1.7;
       max-height: calc(100vh - 72px);
+      white-space: pre-line;   /* 保留公告正文里的段落换行：在竖排里表现为另起一列 */
     }
     .u-divider { border: none; border-top: 1px solid ${RED}; margin: 0; }
     /* 问题1：移除左侧竖灰线（原 border-left）；纵向 flex 便于 footer 沉底 */
@@ -246,9 +270,10 @@ const SiteFooter = ({ siteInfo }) => (
 export const LayoutBase = ({ children, siteInfo, notice }) => {
   const hasShell = useContext(ShellContext)
   if (hasShell) return <>{children}</>
-  // 左侧竖排内容：优先 CONFIG.SIDE_NOTE 手动公告，其次取 Notion 中「type 为 Notice」的公告文章标题。
-  // notice 是 NotionNext 全局数据里的公告对象（只取一条已发布的 Notice）。两者都没有时，左栏整列不渲染。
-  const sideNote = CONFIG.SIDE_NOTE || notice?.summary || ''
+  // 左侧竖排内容：优先 CONFIG.SIDE_NOTE 手动公告，其次取 Notion 中「type 为 Notice」公告文章的【正文】。
+  // notice 是 NotionNext 全局数据里的公告对象（只取一条已发布的 Notice），正文存在 notice.blockMap 中。
+  // 两者都为空时，左栏整列不渲染。
+  const sideNote = CONFIG.SIDE_NOTE || getNoticeText(notice)
   const showLeft = Boolean(sideNote)
   return (
     <ShellContext.Provider value={true}>
