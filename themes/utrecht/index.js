@@ -268,8 +268,8 @@ const ThemeFonts = () => (
 
     .u-footer {
       margin-top: auto;
-      border-top: 1px solid #e0e0e0; padding: 20px 40px; font-size: 10px;
-      color: #e88080; display: flex; justify-content: space-between; letter-spacing: 0.04em;
+      background: ${RED}; padding: 24px 40px; font-size: 10px;
+      color: #fff; display: flex; justify-content: space-between; letter-spacing: 0.04em;
     }
 
     .u-404 { padding: 80px 40px; display: flex; flex-direction: column; gap: 12px; }
@@ -380,9 +380,9 @@ export const LayoutBase = (props) => {
               </pre>
             )}
             {children}
-            <SiteFooter siteInfo={siteInfo} />
           </div>
         </div>
+        <SiteFooter siteInfo={siteInfo} />
       </div>
     </ShellContext.Provider>
   )
