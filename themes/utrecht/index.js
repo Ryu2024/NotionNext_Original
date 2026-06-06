@@ -167,10 +167,10 @@ const ThemeFonts = () => (
 
     .u-page-wrap { display: flex; position: relative; flex: 1; }
     /* 问题2修复：去掉 rotate(180deg) 让竖排恢复正向；从顶部开始排、允许多列换行 */
-    .u-left-label { width: 48px; flex-shrink: 0; position: relative; }
+    .u-left-label { width: 72px; flex-shrink: 0; position: relative; }
     .u-left-label-inner {
       position: sticky; top: 0; height: 100vh;
-      display: flex; align-items: center; justify-content: flex-start;
+      display: flex; align-items: center; justify-content: center;
       padding: 36px 0;
     }
     .u-left-label-text {
@@ -198,7 +198,7 @@ const ThemeFonts = () => (
       width: auto;
       height: auto;
       max-width: 100%;
-      max-height: calc(100vh - 180px);
+      max-height: 700px;
       margin: 0;
     }
 
@@ -273,6 +273,7 @@ const ThemeFonts = () => (
       color: #fff; letter-spacing: 0.04em;
     }
     .u-footer-mark { position: absolute; right: 40px; bottom: 22px; height: 78px; width: auto; display: block; }
+    .u-footer-copy { position: absolute; left: 40px; bottom: 22px; }
 
     .u-404 { padding: 80px 40px; display: flex; flex-direction: column; gap: 12px; }
     .u-404-num { font-size: 60px; font-weight: 800; color: #fce0e0; line-height: 1; }
@@ -285,12 +286,13 @@ const ThemeFonts = () => (
       .u-left-label { display: none; }
       .u-content { border-left: none; }
       .u-home { padding: 24px 16px 48px; }
-      .u-home-img { max-height: calc(100vh - 140px); }
+      .u-home-img { max-height: 480px; }
       .u-photo-grid { padding: 24px 16px 48px; }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
       .u-footer { padding: 18px 16px; min-height: 110px; }
       .u-footer-mark { height: 56px; right: 16px; bottom: 16px; }
+      .u-footer-copy { left: 16px; bottom: 16px; }
     }
 
     @keyframes uFade { from { opacity: 0; } to { opacity: 1; } }
@@ -329,7 +331,7 @@ const SiteHeader = ({ siteInfo }) => {
 const FOOTER_MARK = '/watermelon-white.png'
 const SiteFooter = ({ siteInfo }) => (
   <footer className="u-footer">
-    <span>© {new Date().getFullYear()} {siteInfo?.title || ''}</span>
+    <span className="u-footer-copy">© {new Date().getFullYear()} {siteInfo?.title || ''}</span>
     <img className="u-footer-mark" src={FOOTER_MARK} alt="" />
   </footer>
 )
