@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { NotionRenderer } from 'react-notion-x'
-import mapImgUrl from '@/lib/notion/mapImage'
 import React, { createContext, useContext } from 'react'
 
 const ShellContext = createContext(false)
@@ -94,6 +93,36 @@ const getNoticeText = (notice) => {
     .map((l) => l.trim())
     .filter((l) => l && l !== titleText && l !== summaryText)
     .join('\n')
+}
+
+// 把 Notion 本地上传图片（带签名/防盗链的 S3 链接）转成可正常加载的 notion.so 代理链接。
+// 做法：去掉链接里的签名 query，只留干净路径，再带上 table+id 让 Notion 代理在服务端重新签名。
+// 外链图（unsplash、自有图床等）原样返回，不动。
+const mapNotionImage = (url, block) => {
+  if (!url) return url
+  if (url.startsWith('data:')) return url
+  // 站内相对路径
+  if (url.startsWith('/')) return `https://www.notion.so${url}`
+  // 已经是代理链接，直接用
+  if (url.startsWith('https://www.notion.so/image/')) return url
+  // 仅处理 Notion 的文件/附件链接
+  const isNotionFile =
+    url.includes('amazonaws.com') ||
+    url.includes('prod-files-secure') ||
+    url.includes('secure.notion-static.com') ||
+    url.includes('notion-static.com')
+  if (!isNotionFile) return url
+  try {
+    const clean = url.split('?')[0]            // 去掉签名 query
+    const id = block?.id || block?.value?.id || ''
+    const u = new URL('https://www.notion.so/image/' + encodeURIComponent(clean))
+    u.searchParams.set('table', 'block')
+    if (id) u.searchParams.set('id', id)
+    u.searchParams.set('cache', 'v2')
+    return u.toString()
+  } catch (e) {
+    return url
+  }
 }
 
 // ─── Global CSS ───────────────────────────────────────────────────────────────
@@ -488,10 +517,10 @@ export const LayoutSlug = (props) => {
         {!isAbout && <p className="u-post-date">{formatDate(post.date)}</p>}
         {blockMap ? (
           <div className="notion">
-            {/* mapImageUrl：把 Notion 本地上传图片的签名/防盗链链接转成可正常加载的形式，否则正文图会 403 裂开 */}
+            {/* mapImageUrl：把 Notion 本地上传图片的签名/防盗链链接转成可正常加载的代理链接，否则正文图会 403 裂开 */}
             <NotionRenderer
               recordMap={blockMap}
-              mapImageUrl={(url, block) => mapImgUrl(url, block)}
+              mapImageUrl={mapNotionImage}
               fullPage={false}
               darkMode={false}
               disableHeader={true}
