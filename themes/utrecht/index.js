@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { NotionRenderer } from 'react-notion-x'
+import mapImgUrl from '@/lib/notion/mapImage'
 import React, { createContext, useContext } from 'react'
 
 const ShellContext = createContext(false)
@@ -73,7 +74,6 @@ const getNoticeText = (notice) => {
   }
 
   if (rootKey && Array.isArray(blocks[rootKey]?.value?.content)) {
-    // 正常路径：从根节点沿 content 递归，按文档顺序取正文（跳过根自身的标题）
     const walk = (id) => {
       const v = blocks[id]?.value
       if (!v) return
@@ -82,14 +82,12 @@ const getNoticeText = (notice) => {
     }
     blocks[rootKey].value.content.forEach(walk)
   } else {
-    // 兜底：扫描全部区块取文本（顺序可能略有出入，但短公告足够）
     Object.keys(blocks).forEach((id) => {
       if (norm(id) === norm(rootId)) return
       pushText(blocks[id]?.value)
     })
   }
 
-  // 安全网：把标题 / 摘要从正文里剔除，避免泄漏到竖排
   const titleText = (notice?.title || '').trim()
   const summaryText = (notice?.summary || '').trim()
   return lines
@@ -237,6 +235,7 @@ const ThemeFonts = () => (
     .notion p { margin-bottom: 10px; }
     .notion a { color: ${RED}; text-decoration: underline; text-underline-offset: 2px; }
     .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
+    .notion img { margin: 12px 0; border-radius: 2px; }
 
     .u-footer {
       margin-top: auto;
@@ -489,7 +488,14 @@ export const LayoutSlug = (props) => {
         {!isAbout && <p className="u-post-date">{formatDate(post.date)}</p>}
         {blockMap ? (
           <div className="notion">
-            <NotionRenderer recordMap={blockMap} fullPage={false} darkMode={false} disableHeader={true} />
+            {/* mapImageUrl：把 Notion 本地上传图片的签名/防盗链链接转成可正常加载的形式，否则正文图会 403 裂开 */}
+            <NotionRenderer
+              recordMap={blockMap}
+              mapImageUrl={(url, block) => mapImgUrl(url, block)}
+              fullPage={false}
+              darkMode={false}
+              disableHeader={true}
+            />
           </div>
         ) : (
           <p style={{ fontSize: '11px', color: '#e8a0a0' }}>Loading…</p>
