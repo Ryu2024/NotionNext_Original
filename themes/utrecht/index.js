@@ -248,7 +248,7 @@ const ThemeFonts = () => (
     }
     .u-post-title {
       font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-      font-size: 18px; font-weight: 700; color: ${RED}; line-height: 1.35; margin-bottom: 6px;
+      font-size: 16px; font-weight: 700; color: ${RED}; line-height: 1.35; margin-bottom: 28px;
     }
     .u-post-date { font-size: 10px; color: #e88080; letter-spacing: 0.04em; margin-bottom: 36px; }
 
@@ -508,13 +508,11 @@ export const LayoutSlug = (props) => {
   // 普通文章 / 单页
   if (!post) return <Layout404 {...props} />
   const blockMap = props.blockMap || post.blockMap || post.content
-  const isAbout = post.slug === 'about' || post.type === 'Page'
   return (
     <LayoutBase {...props}>
       <div className="u-post-wrap u-fade">
-        {!isAbout && post.category && <p className="u-post-eyebrow">{post.category}</p>}
+        {/* 按需求：不显示分类(PHOTO)与日期；标题上移到顶部、略缩小，正文紧随其后保持合理间距 */}
         <h1 className="u-post-title">{post.title}</h1>
-        {!isAbout && <p className="u-post-date">{formatDate(post.date)}</p>}
         {blockMap ? (
           <div className="notion">
             {/* mapImageUrl：把 Notion 本地上传图片的签名/防盗链链接转成可正常加载的代理链接，否则正文图会 403 裂开 */}
