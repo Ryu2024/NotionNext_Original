@@ -268,9 +268,11 @@ const ThemeFonts = () => (
 
     .u-footer {
       margin-top: auto;
-      background: ${RED}; padding: 24px 40px; font-size: 10px;
-      color: #fff; display: flex; justify-content: space-between; letter-spacing: 0.04em;
+      position: relative;
+      background: ${RED}; padding: 28px 40px; min-height: 130px; font-size: 10px;
+      color: #fff; letter-spacing: 0.04em;
     }
+    .u-footer-mark { position: absolute; right: 40px; bottom: 22px; height: 78px; width: auto; display: block; }
 
     .u-404 { padding: 80px 40px; display: flex; flex-direction: column; gap: 12px; }
     .u-404-num { font-size: 60px; font-weight: 800; color: #fce0e0; line-height: 1; }
@@ -287,7 +289,8 @@ const ThemeFonts = () => (
       .u-photo-grid { padding: 24px 16px 48px; }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
-      .u-footer { padding: 16px; flex-direction: column; gap: 6px; }
+      .u-footer { padding: 18px 16px; min-height: 110px; }
+      .u-footer-mark { height: 56px; right: 16px; bottom: 16px; }
     }
 
     @keyframes uFade { from { opacity: 0; } to { opacity: 1; } }
@@ -323,9 +326,11 @@ const SiteHeader = ({ siteInfo }) => {
 }
 
 // ─── Footer ─── 问题4：移除 "Powered by Notion"
+const FOOTER_MARK = '/watermelon-white.png'
 const SiteFooter = ({ siteInfo }) => (
   <footer className="u-footer">
     <span>© {new Date().getFullYear()} {siteInfo?.title || ''}</span>
+    <img className="u-footer-mark" src={FOOTER_MARK} alt="" />
   </footer>
 )
 
