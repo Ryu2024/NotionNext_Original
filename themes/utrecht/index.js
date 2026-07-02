@@ -128,7 +128,6 @@ const mapNotionImage = (url, block) => {
 // ─── Global CSS ───────────────────────────────────────────────────────────────
 const ThemeFonts = () => (
   <style dangerouslySetInnerHTML={{ __html: `
-    @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       background: #fff;
@@ -152,7 +151,7 @@ const ThemeFonts = () => (
     /* 问题1修复：Latin 字形用 Georgia（端正衬线），CJK 回落到明朝体，二者搭配更协调。
        想换英文字体就改下面这行最前面的 Georgia。*/
     .u-logo-wordmark {
-      font-family: Georgia, 'Times New Roman', 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: Georgia, 'Times New Roman', 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 22px; font-weight: 700; color: ${RED};
       letter-spacing: 0.04em; line-height: 1; display: block;
     }
@@ -178,7 +177,7 @@ const ThemeFonts = () => (
     }
     .u-left-label-text {
       writing-mode: vertical-rl; text-orientation: mixed;
-      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 10px; color: ${RED}; letter-spacing: 0.15em; line-height: 1.7;
       max-height: calc(100vh - 72px);
       white-space: pre-line;   /* 保留公告正文里的段落换行：在竖排里表现为另起一列 */
@@ -251,20 +250,22 @@ const ThemeFonts = () => (
       color: ${RED}; margin-bottom: 12px;
     }
     .u-post-title {
-      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 16px; font-weight: 700; color: ${RED}; line-height: 1.35; margin-bottom: 28px;
     }
     .u-post-date { font-size: 10px; color: #e88080; letter-spacing: 0.04em; margin-bottom: 36px; }
 
-    /* 正文也用明朝体栈：之前只给 h1-h3 设了 font-family，正文一直继承 body 的黑体 */
+    /* 正文也用明朝体栈：之前只给 h1-h3 设了 font-family，正文一直继承 body 的黑体。
+       --notion-font + !important 是为了压过 react-notion-x 自带样式表里的字体声明。 */
     .notion {
       font-size: 13px; line-height: 1.8; color: ${RED};
-      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      --notion-font: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif !important;
     }
     .notion code, .notion pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .notion .notion-page-title { display: none; }
     .notion h1, .notion h2, .notion h3 {
-      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-weight: 700; color: ${RED}; margin: 24px 0 8px;
     }
     .notion h1 { font-size: 16px; }
@@ -368,6 +369,11 @@ export const LayoutBase = (props) => {
           <title>{siteInfo?.title || 'Journal'}</title>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          {/* 字体统一在这里加载（原 @import 已移除）：Shippori=日文明朝，TC=繁体宋，SC=简体宋（简体内容必须靠它，TC 缺简体字形） */}
+          <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&family=Noto+Serif+SC:wght@400;500;700&display=swap"
+          />
         </Head>
         <ThemeFonts />
         <SiteHeader siteInfo={siteInfo} />
