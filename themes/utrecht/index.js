@@ -238,11 +238,15 @@ const ThemeFonts = () => (
       text-decoration: none; color: inherit;
     }
     .u-blog-title {
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 13px; font-weight: 700; color: ${RED};
       transition: opacity 0.15s;
     }
     .u-blog-item:hover .u-blog-title { opacity: 0.55; }
-    .u-blog-date { font-size: 10px; color: #e88080; letter-spacing: 0.04em; white-space: nowrap; flex-shrink: 0; }
+    .u-blog-date {
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-size: 10px; color: #e88080; letter-spacing: 0.04em; white-space: nowrap; flex-shrink: 0;
+    }
 
     .u-post-wrap { padding: 40px 40px 80px; max-width: 660px; }
     .u-post-eyebrow {
