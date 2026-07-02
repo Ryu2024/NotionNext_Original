@@ -128,7 +128,7 @@ const mapNotionImage = (url, block) => {
 // ─── Global CSS ───────────────────────────────────────────────────────────────
 const ThemeFonts = () => (
   <style dangerouslySetInnerHTML={{ __html: `
-    @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=Noto+Serif+TC:wght@400;500;700&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       background: #fff;
@@ -152,7 +152,7 @@ const ThemeFonts = () => (
     /* 问题1修复：Latin 字形用 Georgia（端正衬线），CJK 回落到明朝体，二者搭配更协调。
        想换英文字体就改下面这行最前面的 Georgia。*/
     .u-logo-wordmark {
-      font-family: Georgia, 'Times New Roman', 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: Georgia, 'Times New Roman', 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 22px; font-weight: 700; color: ${RED};
       letter-spacing: 0.04em; line-height: 1; display: block;
     }
@@ -168,14 +168,17 @@ const ThemeFonts = () => (
     .u-page-wrap { display: flex; position: relative; flex: 1; }
     /* 问题2修复：去掉 rotate(180deg) 让竖排恢复正向；从顶部开始排、允许多列换行 */
     .u-left-label { width: 72px; flex-shrink: 0; position: relative; }
+    /* 高度跟随中间区内容（height:100%），只用 max-height 封顶：
+       内容不足一屏时列高=内容高，不再把页脚挤出视口；
+       内容超过一屏时被 100vh 截断并 sticky 吸顶，竖排文字仍在视口内居中。 */
     .u-left-label-inner {
-      position: sticky; top: 0; height: 100vh;
+      position: sticky; top: 0; height: 100%; max-height: 100vh;
       display: flex; align-items: center; justify-content: center;
       padding: 36px 0;
     }
     .u-left-label-text {
       writing-mode: vertical-rl; text-orientation: mixed;
-      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 10px; color: ${RED}; letter-spacing: 0.15em; line-height: 1.7;
       max-height: calc(100vh - 72px);
       white-space: pre-line;   /* 保留公告正文里的段落换行：在竖排里表现为另起一列 */
@@ -248,7 +251,7 @@ const ThemeFonts = () => (
       color: ${RED}; margin-bottom: 12px;
     }
     .u-post-title {
-      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 16px; font-weight: 700; color: ${RED}; line-height: 1.35; margin-bottom: 28px;
     }
     .u-post-date { font-size: 10px; color: #e88080; letter-spacing: 0.04em; margin-bottom: 36px; }
@@ -256,7 +259,7 @@ const ThemeFonts = () => (
     .notion { font-size: 13px; line-height: 1.8; color: ${RED}; }
     .notion .notion-page-title { display: none; }
     .notion h1, .notion h2, .notion h3 {
-      font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-weight: 700; color: ${RED}; margin: 24px 0 8px;
     }
     .notion h1 { font-size: 16px; }
@@ -267,15 +270,16 @@ const ThemeFonts = () => (
     .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
     .notion img { margin: 12px 0; border-radius: 2px; }
 
-    /* 红条高度 = 西瓜(78px) + 上下各 8px 余量，仅比 logo 高一点点 */
+    /* 页脚做成清爽收尾线：46px ≈ 页头(58px)的 0.8 倍。
+       西瓜坐底(bottom:5px)，版权行同样贴底基线，与西瓜底部对齐。 */
     .u-footer {
       margin-top: auto;
       position: relative;
-      background: ${RED}; height: 94px; font-size: 10px;
+      background: ${RED}; height: 46px; font-size: 10px;
       color: #fff; letter-spacing: 0.04em;
     }
-    .u-footer-mark { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); height: 78px; width: auto; display: block; }
-    .u-footer-copy { position: absolute; left: 40px; top: 50%; transform: translateY(-50%); }
+    .u-footer-mark { position: absolute; right: 40px; bottom: 5px; height: 34px; width: auto; display: block; }
+    .u-footer-copy { position: absolute; left: 40px; bottom: 8px; line-height: 1; }
 
     .u-404 { padding: 80px 40px; display: flex; flex-direction: column; gap: 12px; }
     .u-404-num { font-size: 60px; font-weight: 800; color: #fce0e0; line-height: 1; }
@@ -292,9 +296,9 @@ const ThemeFonts = () => (
       .u-photo-grid { padding: 24px 16px 48px; }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
-      .u-footer { height: 70px; }
-      .u-footer-mark { height: 56px; right: 16px; }
-      .u-footer-copy { left: 16px; }
+      .u-footer { height: 38px; font-size: 9px; }
+      .u-footer-mark { height: 28px; right: 16px; bottom: 4px; }
+      .u-footer-copy { left: 16px; bottom: 7px; }
     }
 
     @keyframes uFade { from { opacity: 0; } to { opacity: 1; } }
