@@ -256,7 +256,12 @@ const ThemeFonts = () => (
     }
     .u-post-date { font-size: 10px; color: #e88080; letter-spacing: 0.04em; margin-bottom: 36px; }
 
-    .notion { font-size: 13px; line-height: 1.8; color: ${RED}; }
+    /* 正文也用明朝体栈：之前只给 h1-h3 设了 font-family，正文一直继承 body 的黑体 */
+    .notion {
+      font-size: 13px; line-height: 1.8; color: ${RED};
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    }
+    .notion code, .notion pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .notion .notion-page-title { display: none; }
     .notion h1, .notion h2, .notion h3 {
       font-family: 'Shippori Mincho', 'Noto Serif TC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
