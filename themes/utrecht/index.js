@@ -229,17 +229,18 @@ const ThemeFonts = () => (
       font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
       color: ${RED}; margin-bottom: 24px;
     }
+    /* 列表项：标题在左、日期在右，同一行；不加任何分隔横线 */
     .u-blog-item {
-      display: block; padding: 14px 0; border-bottom: 1px solid #f0e0e0;
+      display: flex; align-items: baseline; justify-content: space-between; gap: 24px;
+      padding: 10px 0;
       text-decoration: none; color: inherit;
     }
-    .u-blog-item:first-of-type { border-top: 1px solid #f0e0e0; }
     .u-blog-title {
       font-size: 13px; font-weight: 700; color: ${RED};
-      margin-bottom: 3px; transition: opacity 0.15s;
+      transition: opacity 0.15s;
     }
     .u-blog-item:hover .u-blog-title { opacity: 0.55; }
-    .u-blog-meta { font-size: 10px; color: #e88080; letter-spacing: 0.04em; }
+    .u-blog-date { font-size: 10px; color: #e88080; letter-spacing: 0.04em; white-space: nowrap; flex-shrink: 0; }
 
     .u-post-wrap { padding: 40px 40px 80px; max-width: 660px; }
     .u-post-eyebrow {
@@ -266,14 +267,15 @@ const ThemeFonts = () => (
     .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
     .notion img { margin: 12px 0; border-radius: 2px; }
 
+    /* 红条高度 = 西瓜(78px) + 上下各 8px 余量，仅比 logo 高一点点 */
     .u-footer {
       margin-top: auto;
       position: relative;
-      background: ${RED}; padding: 28px 40px; min-height: 130px; font-size: 10px;
+      background: ${RED}; height: 94px; font-size: 10px;
       color: #fff; letter-spacing: 0.04em;
     }
-    .u-footer-mark { position: absolute; right: 40px; bottom: 22px; height: 78px; width: auto; display: block; }
-    .u-footer-copy { position: absolute; left: 40px; bottom: 22px; }
+    .u-footer-mark { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); height: 78px; width: auto; display: block; }
+    .u-footer-copy { position: absolute; left: 40px; top: 50%; transform: translateY(-50%); }
 
     .u-404 { padding: 80px 40px; display: flex; flex-direction: column; gap: 12px; }
     .u-404-num { font-size: 60px; font-weight: 800; color: #fce0e0; line-height: 1; }
@@ -290,9 +292,9 @@ const ThemeFonts = () => (
       .u-photo-grid { padding: 24px 16px 48px; }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
-      .u-footer { padding: 18px 16px; min-height: 110px; }
-      .u-footer-mark { height: 56px; right: 16px; bottom: 16px; }
-      .u-footer-copy { left: 16px; bottom: 16px; }
+      .u-footer { height: 70px; }
+      .u-footer-mark { height: 56px; right: 16px; }
+      .u-footer-copy { left: 16px; }
     }
 
     @keyframes uFade { from { opacity: 0; } to { opacity: 1; } }
@@ -473,14 +475,10 @@ const BlogList = ({ posts }) => {
   }
   return (
     <div className="u-blog-wrap u-fade">
-      <p className="u-section-label">{items.length} {items.length === 1 ? 'Entry' : 'Entries'}</p>
       {items.map((post) => (
         <Link key={post.id} href={`/${post.slug}`} className="u-blog-item">
-          <p className="u-blog-title">{post.title}</p>
-          <p className="u-blog-meta">
-            {post.category && <>{post.category}&nbsp;·&nbsp;</>}
-            {formatDate(post.date)}
-          </p>
+          <span className="u-blog-title">{post.title}</span>
+          <span className="u-blog-date">{formatDate(post.date)}</span>
         </Link>
       ))}
     </div>
@@ -516,11 +514,13 @@ export const LayoutSlug = (props) => {
   // 普通文章 / 单页
   if (!post) return <Layout404 {...props} />
   const blockMap = props.blockMap || post.blockMap || post.content
+  // About 这类独立页面不显示标题，直接进正文；顶部间距由 .u-post-wrap 的 padding 保证（与其他页面一致）
+  const hideTitle = slug === 'about'
   return (
     <LayoutBase {...props}>
       <div className="u-post-wrap u-fade">
         {/* 按需求：不显示分类(PHOTO)与日期；标题上移到顶部、略缩小，正文紧随其后保持合理间距 */}
-        <h1 className="u-post-title">{post.title}</h1>
+        {!hideTitle && <h1 className="u-post-title">{post.title}</h1>}
         {blockMap ? (
           <div className="notion">
             {/* mapImageUrl：把 Notion 本地上传图片的签名/防盗链链接转成可正常加载的代理链接，否则正文图会 403 裂开 */}
