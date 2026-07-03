@@ -331,7 +331,7 @@ const ThemeFonts = () => (
         display: block; flex-shrink: 0;
         writing-mode: vertical-rl; text-orientation: mixed;
         font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-        font-size: 11px; line-height: 1.8; letter-spacing: 0.12em; color: ${RED};
+        font-size: 9px; line-height: 1.75; letter-spacing: 0.1em; color: ${RED};
         max-height: 480px; white-space: normal;
         overflow: hidden;
       }
