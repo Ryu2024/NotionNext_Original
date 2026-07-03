@@ -36,6 +36,14 @@ const formatDate = (dateStr) => {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
+// 把文章日期解析成可比较的时间戳（毫秒）；无日期或无法解析时返回 -Infinity，用于排序时沉底。
+const getDateValue = (post) => {
+  const raw = post?.date?.start_date || post?.date
+  if (!raw) return -Infinity
+  const t = new Date(raw).getTime()
+  return isNaN(t) ? -Infinity : t
+}
+
 // 把 NotionNext 在 slug 页面可能传入的所有文章数组合并去重
 const collectAllPosts = (props) => {
   const merged = []
@@ -526,7 +534,8 @@ const PhotoGrid = ({ posts }) => {
 
 // ─── Blog List ────────────────────────────────────────────────────────────────
 const BlogList = ({ posts }) => {
-  const items = posts || []
+  // 按日期倒序（新→旧）；无日期的文章排到最末。用切片避免改动传入数组。
+  const items = [...(posts || [])].sort((a, b) => getDateValue(b) - getDateValue(a))
   if (!items.length) {
     return (
       <div style={{ padding: '60px 40px' }}>
