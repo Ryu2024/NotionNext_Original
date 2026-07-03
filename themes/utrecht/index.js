@@ -213,6 +213,10 @@ const ThemeFonts = () => (
       max-height: 700px;
       margin: 0;
     }
+    /* 封面竖栏（竖排公告贴封面左侧）：桌面端不显示——桌面已有整页左栏，避免重复。
+       仅在移动端出现，填补移动端隐藏整页左栏后的空白。 */
+    .u-home-cover { display: block; }
+    .u-home-side { display: none; }
 
     /* 问题3修复：容器背景透明；问题4：加内边距让照片不顶到顶部、四周留白 */
     .u-photo-grid {
@@ -318,7 +322,20 @@ const ThemeFonts = () => (
       .u-left-label { display: none; }
       .u-content { border-left: none; }
       .u-home { padding: 24px 16px 48px; }
-      .u-home-img { max-height: 480px; }
+      .u-home-img { max-height: 480px; min-width: 0; }
+      /* 移动端：竖排公告贴在封面左侧并排。
+         竖栏用 vertical-rl，给 max-height（跟封面等高 480px）+ white-space:normal，
+         文字写满一列后自动向左折成第二、三列（像书页），不会向下无限顶、也不溢出。 */
+      .u-home-cover { display: flex; align-items: flex-start; gap: 12px; }
+      .u-home-side {
+        display: block; flex-shrink: 0;
+        writing-mode: vertical-rl; text-orientation: mixed;
+        font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+        font-size: 11px; line-height: 1.8; letter-spacing: 0.12em; color: ${RED};
+        max-height: 480px; white-space: normal;
+        overflow: hidden;
+      }
+      .u-home-cover .u-home-img { max-height: 480px; min-width: 0; flex: 1; }
       .u-photo-grid { padding: 24px 16px 48px; }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
@@ -475,13 +492,18 @@ export const LayoutBase = (props) => {
 
 // ─── LayoutIndex (Home) ───────────────────────────────────────────────────────
 export const LayoutIndex = (props) => {
-  const { siteInfo } = props
+  const { siteInfo, notice } = props
   const cover = siteInfo?.pageCover || siteInfo?.pageCoverThumbnail
+  // 与 LayoutBase 同源的公告文本：竖栏仅在移动端显示（由 CSS 控制），桌面端不渲染重复内容
+  const sideNote = CONFIG.SIDE_NOTE || getNoticeText(notice)
   return (
     <LayoutBase {...props}>
       {cover ? (
         <div className="u-home">
-          <img src={cover} alt="" className="u-home-img u-fade" />
+          <div className="u-home-cover">
+            {sideNote && <div className="u-home-side">{sideNote}</div>}
+            <img src={cover} alt="" className="u-home-img u-fade" />
+          </div>
         </div>
       ) : (
         <div style={{
