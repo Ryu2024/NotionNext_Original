@@ -332,7 +332,7 @@ const ThemeFonts = () => (
         writing-mode: vertical-rl; text-orientation: mixed;
         font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
         font-size: 9px; line-height: 1.75; letter-spacing: 0.1em; color: ${RED};
-        max-height: 480px; white-space: normal;
+        max-height: 480px; white-space: pre-line;   /* 保留公告手动换行=另起一列，且列满时自动折列 */
         overflow: hidden;
       }
       .u-home-cover .u-home-img { max-height: 480px; min-width: 0; flex: 1; }
