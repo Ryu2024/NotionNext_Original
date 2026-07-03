@@ -11,7 +11,7 @@ import React, { createContext, useContext } from 'react'
 
 const ShellContext = createContext(false)
 
-const RED = '#e8001d'
+const RED = '#DA0001'
 
 export const CONFIG = {
   THEME_SWITCH: false,
@@ -317,10 +317,41 @@ const ThemeFonts = () => (
 )
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-const SiteHeader = ({ siteInfo }) => {
+// 从 NotionNext 传入的 props 里提取导航项，跟随 Notion 中页面的显示/隐藏状态。
+// 各版本字段名不统一，这里依次尝试；元素字段(name/title、href/to/slug、show)也做兼容。
+// Notion 中把某页设为 Invisible / 删除，NotionNext 就不会把它放进 customNav，菜单项随之消失。
+// 取不到任何数据时返回 null，由调用方回退到写死的 CONFIG.NAV_TABS，保证永不白屏。
+const resolveNav = (props) => {
+  const raw =
+    props?.customNav ||
+    props?.customMenu ||
+    props?.nav ||
+    props?.navList ||
+    props?.menu ||
+    null
+  if (!Array.isArray(raw) || raw.length === 0) return null
+
+  const items = raw
+    // show 字段存在且为 false 才算隐藏；字段不存在(undefined)视为显示
+    .filter((it) => it && it.show !== false)
+    .map((it) => {
+      const label = it.name ?? it.title ?? it.label ?? ''
+      let path = it.href ?? it.to ?? it.slug ?? it.path ?? ''
+      if (path && !path.startsWith('/') && !path.startsWith('http')) path = '/' + path
+      return { label, path }
+    })
+    .filter((it) => it.label && it.path)
+
+  return items.length > 0 ? items : null
+}
+
+
+const SiteHeader = ({ siteInfo, navItems }) => {
   const router = useRouter()
   const path = router.asPath
   const isActive = (p) => (p === '/' ? path === '/' : path.startsWith(p))
+  // navItems 来自 Notion（跟随页面显隐）；为空时回退到写死的 NAV_TABS
+  const tabs = navItems && navItems.length > 0 ? navItems : CONFIG.NAV_TABS
   return (
     <header className="u-header">
       <div className="u-header-top">
@@ -328,7 +359,7 @@ const SiteHeader = ({ siteInfo }) => {
           <span className="u-logo-wordmark">{siteInfo?.title || 'Journal'}</span>
         </Link>
         <nav className="u-nav-row">
-          {CONFIG.NAV_TABS.map((tab) => (
+          {tabs.map((tab) => (
             <Link
               key={tab.path}
               href={tab.path}
@@ -362,6 +393,8 @@ export const LayoutBase = (props) => {
   // 两者都为空时，左栏整列不渲染。
   const sideNote = CONFIG.SIDE_NOTE || getNoticeText(notice)
   const showLeft = Boolean(sideNote)
+  // 跟随 Notion 页面显隐的导航；取不到则 Header 内部回退到 CONFIG.NAV_TABS
+  const navItems = resolveNav(props)
   return (
     <ShellContext.Provider value={true}>
       {/* id="theme-utrecht" 必须保留：NotionNext 的 fixThemeDOM 靠它识别并清理重复外壳 */}
@@ -380,7 +413,7 @@ export const LayoutBase = (props) => {
           />
         </Head>
         <ThemeFonts />
-        <SiteHeader siteInfo={siteInfo} />
+        <SiteHeader siteInfo={siteInfo} navItems={navItems} />
         <div className="u-page-wrap">
           {showLeft && (
             <div className="u-left-label">
