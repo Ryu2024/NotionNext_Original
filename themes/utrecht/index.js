@@ -276,6 +276,12 @@ const ThemeFonts = () => (
       --notion-font: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif !important;
     }
+    /* 对齐 Blog 首行：清掉 react-notion-x 的 .notion-page 默认 padding 和首块 margin，
+       再补 10px，使正文首行距容器顶 = 40(padding) + 10 = 50px，与 .u-blog-item 一致。 */
+    .notion .notion-page { padding: 0 !important; margin: 0 !important; }
+    .notion .notion-page > *:first-child,
+    .notion > .notion-page-content > *:first-child { margin-top: 0 !important; }
+    .u-post-body-top { padding-top: 10px; }
     .notion code, .notion pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .notion .notion-page-title { display: none; }
     .notion h1, .notion h2, .notion h3 {
@@ -592,7 +598,7 @@ export const LayoutSlug = (props) => {
         {/* 按需求：不显示分类(PHOTO)与日期；标题上移到顶部、略缩小，正文紧随其后保持合理间距 */}
         {!hideTitle && <h1 className="u-post-title">{post.title}</h1>}
         {blockMap ? (
-          <div className="notion">
+          <div className={`notion${hideTitle ? ' u-post-body-top' : ''}`}>
             {/* mapImageUrl：把 Notion 本地上传图片的签名/防盗链链接转成可正常加载的代理链接，否则正文图会 403 裂开 */}
             <NotionRenderer
               recordMap={blockMap}
