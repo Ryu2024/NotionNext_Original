@@ -280,21 +280,12 @@ const ThemeFonts = () => (
       --notion-font: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif !important;
     }
-    /* 对齐 Blog 首行：Blog 首行 = 40(wrap) + 10(item) = 50px。
-       react-notion-x 在 fullPage=false 下的容器类名不固定，这里把各级容器
-       (.notion-page / .notion-page-content / -inner / -scroller) 及首块的顶部
-       padding/margin 一律清零，再由 .u-post-body-top 统一补 10px，使 About 首行也落在 50px。 */
-    .notion .notion-page,
-    .notion .notion-page-content,
-    .notion .notion-page-content-inner,
-    .notion .notion-page-scroller {
-      padding-top: 0 !important; margin-top: 0 !important;
-    }
-    .notion > *:first-child,
-    .notion .notion-page > *:first-child,
-    .notion .notion-page-content > *:first-child,
-    .notion .notion-page-content-inner > *:first-child,
-    .notion .notion-text:first-child {
+    /* 对齐 Blog 首行。已确认 react-notion-x 在 fullPage=false 下无 .notion-page 包裹层，
+       第一行正文就是 .notion 的直接子元素 .notion-text，它自带 padding:3px 2px。
+       Blog 首行 = 40(wrap) + 10(.u-blog-item) = 50px。
+       这里清掉首块 .notion-text 的自带间距，再由 .u-post-body-top 统一补 10px，两页首行对齐。 */
+    .notion > .notion-text:first-child,
+    .notion > *:first-child {
       margin-top: 0 !important; padding-top: 0 !important;
     }
     .u-post-body-top { padding-top: 10px; }
