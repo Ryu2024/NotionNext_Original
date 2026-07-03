@@ -288,7 +288,10 @@ const ThemeFonts = () => (
     .notion > *:first-child {
       margin-top: 0 !important; padding-top: 0 !important;
     }
-    .u-post-body-top { padding-top: 10px; }
+    /* 实测：About 首行(.notion-text)比 Blog(.u-blog-title)低 10.75px。
+       原因是 react-notion-x 的首块 .notion-text 已自带约 10.75px 顶部空间，
+       之前再叠加 10px padding 属于加倍。这里改为不加 padding、并用 -0.75px 抹平零头，两页首行精确对齐。 */
+    .u-post-body-top { padding-top: 0; margin-top: -0.75px; }
     .notion code, .notion pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .notion .notion-page-title { display: none; }
     .notion h1, .notion h2, .notion h3 {
