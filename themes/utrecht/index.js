@@ -44,7 +44,9 @@ const getDateValue = (post) => {
   return isNaN(t) ? -Infinity : t
 }
 
-// 把 NotionNext 在 slug 页面可能传入的所有文章数组合并去重
+// 把 NotionNext 在 slug 页面可能传入的所有文章数组合并去重。
+// 注意：allNavPages 是为搜索/导航精简过的数据，可能没有 id 字段——
+// 因此去重键放宽为 id / slug / href / title 任一，避免这些文章被误丢。
 const collectAllPosts = (props) => {
   const merged = []
   ;['allNavPages', 'allPages', 'allPosts', 'posts', 'latestPosts'].forEach((key) => {
@@ -52,8 +54,10 @@ const collectAllPosts = (props) => {
   })
   const seen = new Set()
   return merged.filter((p) => {
-    if (!p || !p.id || seen.has(p.id)) return false
-    seen.add(p.id)
+    if (!p) return false
+    const key = p.id || p.slug || p.href || p.title
+    if (!key || seen.has(key)) return false
+    seen.add(key)
     const s = (p.slug || '').toLowerCase()
     return s !== 'photo' && s !== 'blog' && s !== 'about'
   })
@@ -610,6 +614,7 @@ export const LayoutSlug = (props) => {
         latestPosts: arr('latestPosts'),
       })
       console.log('[BLOG诊断] 合并去重后 source 条数:', source.length)
+      console.log('[BLOG诊断] allNavPages 首篇完整字段:', props.allNavPages?.[0])
       console.log(
         '[BLOG诊断] source 每篇 (title / category / status / type):',
         source.map((p) => ({
