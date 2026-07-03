@@ -280,11 +280,23 @@ const ThemeFonts = () => (
       --notion-font: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif !important;
     }
-    /* 对齐 Blog 首行：清掉 react-notion-x 的 .notion-page 默认 padding 和首块 margin，
-       再补 10px，使正文首行距容器顶 = 40(padding) + 10 = 50px，与 .u-blog-item 一致。 */
-    .notion .notion-page { padding: 0 !important; margin: 0 !important; }
+    /* 对齐 Blog 首行：Blog 首行 = 40(wrap) + 10(item) = 50px。
+       react-notion-x 在 fullPage=false 下的容器类名不固定，这里把各级容器
+       (.notion-page / .notion-page-content / -inner / -scroller) 及首块的顶部
+       padding/margin 一律清零，再由 .u-post-body-top 统一补 10px，使 About 首行也落在 50px。 */
+    .notion .notion-page,
+    .notion .notion-page-content,
+    .notion .notion-page-content-inner,
+    .notion .notion-page-scroller {
+      padding-top: 0 !important; margin-top: 0 !important;
+    }
+    .notion > *:first-child,
     .notion .notion-page > *:first-child,
-    .notion > .notion-page-content > *:first-child { margin-top: 0 !important; }
+    .notion .notion-page-content > *:first-child,
+    .notion .notion-page-content-inner > *:first-child,
+    .notion .notion-text:first-child {
+      margin-top: 0 !important; padding-top: 0 !important;
+    }
     .u-post-body-top { padding-top: 10px; }
     .notion code, .notion pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .notion .notion-page-title { display: none; }
