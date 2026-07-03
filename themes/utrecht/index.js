@@ -19,11 +19,13 @@ export const CONFIG = {
   SIDE_NOTE: '',
   // 调试开关：设为 true 后，首页内容区顶部会打印 notice 的诊断信息（排查公告问题时用，正常上线请保持 false）
   DEBUG_NOTICE: false,
+  // pinned:true 的项永远显示（不随 Notion 显隐）；Home 是路由不是 Notion 页，About 在 Notion 里是 Invisible 但仍要保留在菜单。
+  // 其余项（Photo/Blog 及以后新增页面）跟随 Notion：在 Notion 里隐藏或删除，菜单项自动消失。
   NAV_TABS: [
-    { label: 'Home', path: '/' },
+    { label: 'Home', path: '/', pinned: true },
     { label: 'Photo', path: '/photo' },
     { label: 'Blog', path: '/blog' },
-    { label: 'About', path: '/about' }
+    { label: 'About', path: '/about', pinned: true }
   ]
 }
 
@@ -317,10 +319,12 @@ const ThemeFonts = () => (
 )
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-// 从 NotionNext 传入的 props 里提取导航项，跟随 Notion 中页面的显示/隐藏状态。
-// 各版本字段名不统一，这里依次尝试；元素字段(name/title、href/to/slug、show)也做兼容。
-// Notion 中把某页设为 Invisible / 删除，NotionNext 就不会把它放进 customNav，菜单项随之消失。
-// 取不到任何数据时返回 null，由调用方回退到写死的 CONFIG.NAV_TABS，保证永不白屏。
+// 计算最终导航。规则：
+//  - 以 CONFIG.NAV_TABS 的顺序为骨架（保证 Home…About 的排列稳定）。
+//  - pinned:true 的项无条件显示（Home 是路由；About 在 Notion 里 Invisible 但仍要留在菜单）。
+//  - 非 pinned 项只有当它对应的页面在 Notion 里“可见”时才显示：
+//    在 Notion 把 Photo 设 Invisible 或删除后，它就不在 visiblePaths 里，菜单项随之消失。
+//  - 取不到 Notion 数据时（visiblePaths 为空），非 pinned 项默认全部保留，避免误删菜单。
 const resolveNav = (props) => {
   const raw =
     props?.customNav ||
@@ -329,20 +333,25 @@ const resolveNav = (props) => {
     props?.navList ||
     props?.menu ||
     null
-  if (!Array.isArray(raw) || raw.length === 0) return null
 
-  const items = raw
-    // show 字段存在且为 false 才算隐藏；字段不存在(undefined)视为显示
-    .filter((it) => it && it.show !== false)
-    .map((it) => {
-      const label = it.name ?? it.title ?? it.label ?? ''
-      let path = it.href ?? it.to ?? it.slug ?? it.path ?? ''
-      if (path && !path.startsWith('/') && !path.startsWith('http')) path = '/' + path
-      return { label, path }
-    })
-    .filter((it) => it.label && it.path)
+  // Notion 侧当前“可见”的路径集合（已归一化为 /xxx）
+  const visiblePaths = new Set()
+  if (Array.isArray(raw)) {
+    raw
+      .filter((it) => it && it.show !== false)
+      .forEach((it) => {
+        let p = it.href ?? it.to ?? it.slug ?? it.path ?? ''
+        if (p && !p.startsWith('/') && !p.startsWith('http')) p = '/' + p
+        if (p) visiblePaths.add(p)
+      })
+  }
+  const hasNotionNav = visiblePaths.size > 0
 
-  return items.length > 0 ? items : null
+  return CONFIG.NAV_TABS.filter((tab) => {
+    if (tab.pinned) return true            // Home / About 常驻
+    if (!hasNotionNav) return true         // 拿不到 Notion 导航时不误删
+    return visiblePaths.has(tab.path)      // 其余项按 Notion 显隐
+  })
 }
 
 
