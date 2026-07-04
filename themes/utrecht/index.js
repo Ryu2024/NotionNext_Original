@@ -631,36 +631,6 @@ export const LayoutSlug = (props) => {
   if (slug === 'photo' || slug === 'blog') {
     const source = collectAllPosts(props)
 
-    // ── 临时诊断（排查 Blog 缺文章）：确认后删除这个 if 块 ──
-    if (slug === 'blog') {
-      const arr = (k) => (Array.isArray(props[k]) ? props[k].length : '(无此数组)')
-      // eslint-disable-next-line no-console
-      console.log('[BLOG诊断] 各数组条数:', {
-        allNavPages: arr('allNavPages'),
-        allPages: arr('allPages'),
-        allPosts: arr('allPosts'),
-        posts: arr('posts'),
-        latestPosts: arr('latestPosts'),
-      })
-      console.log('[BLOG诊断] 合并去重后 source 条数:', source.length)
-      console.log('[BLOG诊断] allNavPages 首篇完整字段:', props.allNavPages?.[0])
-      console.log(
-        '[BLOG诊断] source 每篇 (title / category / status / type):',
-        source.map((p) => ({
-          title: p.title,
-          category: p.category,
-          status: p.status,
-          type: p.type,
-          slug: p.slug,
-        }))
-      )
-      const blogCat = source.filter(
-        (p) => (p.category || '').toString().toLowerCase() === 'blog'
-      )
-      console.log('[BLOG诊断] 其中 category==="blog" 的条数:', blogCat.length)
-    }
-    // ── 诊断结束 ──
-
     let items
     if (slug === 'photo') {
       // Photo：归到 photo 分类/标签的文章；没有命中则退回所有带封面图的。
