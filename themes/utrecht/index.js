@@ -29,33 +29,62 @@ export const CONFIG = {
   ]
 }
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const d = new Date(dateStr?.start_date || dateStr)
-  if (isNaN(d)) return ''
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+// 从一篇文章里取原始日期字符串。不同数组字段名不同：
+//  - latestPosts/posts 通常是 date（可能是 { start_date } 对象）
+//  - allNavPages 是精简数据，日期常叫 publishDate / publishDay / lastEditedDate / lastEditedDay
+// 依次尝试，返回第一个非空值。
+const pickRawDate = (post) => {
+  if (!post) return ''
+  const d = post.date
+  return (
+    (d && (d.start_date || (typeof d === 'string' ? d : ''))) ||
+    post.publishDate ||
+    post.publishDay ||
+    post.lastEditedDate ||
+    post.lastEditedDay ||
+    post.lastEditedTime ||
+    ''
+  )
 }
 
-// 把文章日期解析成可比较的时间戳（毫秒）；无日期或无法解析时返回 -Infinity，用于排序时沉底。
+const formatDate = (input) => {
+  // 兼容三种传入：文章对象、{ start_date } 对象、日期字符串
+  let raw = ''
+  if (input && typeof input === 'object' && !input.start_date && (input.date || input.publishDate || input.publishDay)) {
+    raw = pickRawDate(input)                    // 传进来的是文章对象
+  } else {
+    raw = input?.start_date || input || ''      // 传进来的是 { start_date } 或字符串
+  }
+  if (!raw) return ''
+  const dt = new Date(raw)
+  if (isNaN(dt)) return ''
+  return `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`
+}
+
+// 文章 → 格式化日期字符串（供列表显示用）
+const getPostDate = (post) => formatDate(pickRawDate(post))
+
+// 文章 → 可比较时间戳（毫秒）；无日期返回 -Infinity 用于排序沉底。
 const getDateValue = (post) => {
-  const raw = post?.date?.start_date || post?.date
+  const raw = pickRawDate(post)
   if (!raw) return -Infinity
   const t = new Date(raw).getTime()
   return isNaN(t) ? -Infinity : t
 }
 
 // 把 NotionNext 在 slug 页面可能传入的所有文章数组合并去重。
-// 注意：allNavPages 是为搜索/导航精简过的数据，可能没有 id 字段——
-// 因此去重键放宽为 id / slug / href / title 任一，避免这些文章被误丢。
+// 关键：allNavPages 没有 id，latestPosts 有 id——若用 id 去重，两组的同一篇文章会被
+// 当成不同项而重复。所以去重键改用两组都有的 slug（退而用 href/title），保证能认出同一篇。
+// 合并顺序把字段更全的 latestPosts/posts 放在前面，去重保留先出现的那份，日期等信息更完整。
 const collectAllPosts = (props) => {
   const merged = []
-  ;['allNavPages', 'allPages', 'allPosts', 'posts', 'latestPosts'].forEach((key) => {
+  ;['latestPosts', 'posts', 'allPosts', 'allPages', 'allNavPages'].forEach((key) => {
     if (Array.isArray(props[key])) merged.push(...props[key])
   })
   const seen = new Set()
   return merged.filter((p) => {
     if (!p) return false
-    const key = p.id || p.slug || p.href || p.title
+    const key = (p.slug || p.href || p.title || '').toString().toLowerCase()
     if (!key || seen.has(key)) return false
     seen.add(key)
     const s = (p.slug || '').toLowerCase()
@@ -586,7 +615,7 @@ const BlogList = ({ posts }) => {
       {items.map((post) => (
         <Link key={post.id} href={`/${post.slug}`} className="u-blog-item">
           <span className="u-blog-title">{post.title}</span>
-          <span className="u-blog-date">{formatDate(post.date)}</span>
+          <span className="u-blog-date">{getPostDate(post)}</span>
         </Link>
       ))}
     </div>
