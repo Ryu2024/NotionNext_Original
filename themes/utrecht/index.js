@@ -336,9 +336,14 @@ const ThemeFonts = () => (
     .notion h3 { font-size: 13px; }
     .notion p { margin-bottom: 10px; }
     .notion a { color: ${RED}; text-decoration: underline; text-underline-offset: 2px; }
-    .notion blockquote { border-left: 2px solid ${RED}; padding-left: 16px; opacity: 0.7; }
-    /* 引用/标注块（react-notion-x 的 quote / callout）：字号与正文一致(13px)、去圆角，避免喧宾夺主。
-       用 !important 覆盖库自带样式；字号连同内部所有子元素一起压平。 */
+    .notion blockquote,
+    .notion .notion-quote {
+      border-left: 2px solid ${RED} !important;
+      border-top: none !important; border-right: none !important; border-bottom: none !important;
+      padding-left: 16px; opacity: 0.7;
+    }
+    /* 引用/标注块（react-notion-x 的 quote 实为 <blockquote class="notion-quote">，callout 为 .notion-callout）：
+       字号与正文一致(13px)、去圆角、背景透明，避免喧宾夺主。用 !important 覆盖库自带样式。 */
     .notion .notion-quote,
     .notion .notion-callout,
     .notion .notion-quote *,
@@ -347,9 +352,11 @@ const ThemeFonts = () => (
       font-size: 13px !important;
       line-height: 1.8 !important;
     }
+    .notion .notion-quote,
     .notion .notion-callout,
     .notion .notion-callout > * {
       border-radius: 0 !important;
+      background: transparent !important;
     }
     .notion img { margin: 12px 0; border-radius: 2px; }
 
