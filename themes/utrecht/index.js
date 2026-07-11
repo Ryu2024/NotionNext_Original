@@ -369,7 +369,10 @@ const ThemeFonts = () => (
       color: #fff; letter-spacing: 0.04em;
     }
     .u-footer-mark { position: absolute; right: 40px; bottom: 5px; height: 34px; width: auto; display: block; }
-    .u-footer-copy { position: absolute; left: 40px; bottom: 8px; line-height: 1; }
+    .u-footer-copy {
+      position: absolute; left: 40px; bottom: 8px; line-height: 1;
+      font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    }
 
     .u-404 { padding: 80px 40px; display: flex; flex-direction: column; gap: 12px; }
     .u-404-num { font-size: 60px; font-weight: 800; color: #fce0e0; line-height: 1; }
@@ -425,7 +428,17 @@ const resolveNav = (props) => {
     props?.menu ||
     null
 
-  // Notion 侧当前“可见”的路径集合（已归一化为 /xxx）
+  // 归一化路径用于比对：去掉结尾斜杠和 .html 后缀。
+  // 开启 PSEUDO_STATIC 后 Notion 侧路径会带 .html（如 /blog.html），
+  // 与写死的 NAV_TABS(/blog) 不一致，会导致菜单项被误判为隐藏——这里抹平差异。
+  const normPath = (p) =>
+    (p || '')
+      .toString()
+      .replace(/\/+$/, '')
+      .replace(/\.html$/i, '')
+      .toLowerCase()
+
+  // Notion 侧当前“可见”的路径集合（已归一化）
   const visiblePaths = new Set()
   if (Array.isArray(raw)) {
     raw
@@ -433,15 +446,15 @@ const resolveNav = (props) => {
       .forEach((it) => {
         let p = it.href ?? it.to ?? it.slug ?? it.path ?? ''
         if (p && !p.startsWith('/') && !p.startsWith('http')) p = '/' + p
-        if (p) visiblePaths.add(p)
+        if (p) visiblePaths.add(normPath(p))
       })
   }
   const hasNotionNav = visiblePaths.size > 0
 
   return CONFIG.NAV_TABS.filter((tab) => {
-    if (tab.pinned) return true            // Home / About 常驻
-    if (!hasNotionNav) return true         // 拿不到 Notion 导航时不误删
-    return visiblePaths.has(tab.path)      // 其余项按 Notion 显隐
+    if (tab.pinned) return true                    // Home / About 常驻
+    if (!hasNotionNav) return true                 // 拿不到 Notion 导航时不误删
+    return visiblePaths.has(normPath(tab.path))    // 其余项按 Notion 显隐（归一化后比对）
   })
 }
 
@@ -476,12 +489,28 @@ const SiteHeader = ({ siteInfo, navItems }) => {
 
 // ─── Footer ─── 问题4：移除 "Powered by Notion"
 const FOOTER_MARK = '/watermelon-white.png'
-const SiteFooter = ({ siteInfo }) => (
-  <footer className="u-footer">
-    <span className="u-footer-copy">© {new Date().getFullYear()} {siteInfo?.title || ''}</span>
-    <img className="u-footer-mark" src={FOOTER_MARK} alt="" />
-  </footer>
-)
+// 从 NotionNext 传入的数据里取 SINCE（建站年份）。不同版本位置不一，依次尝试；
+// 取不到时退回当前年份，避免留空。
+const resolveSince = (props) => {
+  const s =
+    props?.siteInfo?.since ??
+    props?.NOTION_CONFIG?.SINCE ??
+    props?.notionConfig?.SINCE ??
+    props?.since ??
+    props?.SINCE
+  const n = parseInt(s, 10)
+  return Number.isFinite(n) && n > 0 ? n : new Date().getFullYear()
+}
+const SiteFooter = (props) => {
+  const { siteInfo } = props
+  const since = resolveSince(props)
+  return (
+    <footer className="u-footer">
+      <span className="u-footer-copy">© Since {since} {siteInfo?.title || ''}</span>
+      <img className="u-footer-mark" src={FOOTER_MARK} alt="" />
+    </footer>
+  )
+}
 
 // ─── LayoutBase ───────────────────────────────────────────────────────────────
 export const LayoutBase = (props) => {
@@ -544,7 +573,7 @@ export const LayoutBase = (props) => {
             {children}
           </div>
         </div>
-        <SiteFooter siteInfo={siteInfo} />
+        <SiteFooter {...props} />
       </div>
     </ShellContext.Provider>
   )
@@ -609,7 +638,7 @@ const PhotoGrid = ({ posts }) => {
   return (
     <div className="u-photo-grid u-fade">
       {items.map((post) => (
-        <Link key={post.id} href={`/${post.slug}`}>
+        <Link key={post.id} href={post.href || `/${post.slug}`}>
           <div className="u-photo-cell">
             <img src={post.pageCoverThumbnail || post.pageCover} alt={post.title} loading="lazy" />
             <div className="u-photo-caption">{post.title}</div>
@@ -634,7 +663,7 @@ const BlogList = ({ posts }) => {
   return (
     <div className="u-blog-wrap u-fade">
       {items.map((post) => (
-        <Link key={post.id} href={`/${post.slug}`} className="u-blog-item">
+        <Link key={post.id} href={post.href || `/${post.slug}`} className="u-blog-item">
           <span className="u-blog-title">{post.title}</span>
           <span className="u-blog-date">{getPostDate(post)}</span>
         </Link>
@@ -751,7 +780,7 @@ export const LayoutArchive = (props) => {
             {archivePosts[year].map((post) => (
               <Link
                 key={post.id}
-                href={`/${post.slug}`}
+                href={post.href || `/${post.slug}`}
                 style={{
                   display: 'flex', justifyContent: 'space-between', padding: '7px 0',
                   borderBottom: '1px solid #fce8e8', fontSize: '13px', color: RED, textDecoration: 'none'
