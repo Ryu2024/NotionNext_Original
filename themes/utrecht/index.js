@@ -11,7 +11,7 @@ import React, { createContext, useContext } from 'react'
 
 const ShellContext = createContext(false)
 
-const RED = '#DA0001'
+const RED = '#db0001'
 
 export const CONFIG = {
   THEME_SWITCH: false,
@@ -185,8 +185,21 @@ const ThemeFonts = () => (
     a { color: inherit; text-decoration: none; }
     img { display: block; max-width: 100%; }
 
-    /* 让整个外壳至少撑满一屏，配合 footer 的 margin-top:auto 把页脚顶到底部 */
-    #theme-utrecht { display: flex; flex-direction: column; min-height: 100vh; }
+    /* 全局高度变量：首页封面要"一屏内放得下"，必须知道页头/页脚/首页内边距各占多少。
+       改这里的数值即可，无需再去下面逐条算。
+       --u-header-h = 上下 padding 18*2 + 字号22*行高1 + 底部 1px 红线 = 59px
+       --u-footer-h = .u-footer 的 height
+       --u-home-pad = .u-home 的上下 padding 之和 (36 + 64) */
+    :root {
+      --u-header-h: 59px;
+      --u-footer-h: 46px;
+      --u-home-pad: 100px;
+      /* 一屏内留给封面图的净高度。dvh 让移动端地址栏收放时也准确 */
+      --u-viewport-free: calc(100dvh - var(--u-header-h) - var(--u-footer-h) - var(--u-home-pad));
+    }
+    /* 让整个外壳至少撑满一屏，配合 footer 的 margin-top:auto 把页脚顶到底部。
+       用 100dvh 而非 100vh：移动端 100vh 按"地址栏收起"的最大高度算，会凭空多出几十像素导致页面可滚动 */
+    #theme-utrecht { display: flex; flex-direction: column; min-height: 100dvh; }
     /* 问题2：顶部横线改成红色细线 */
     .u-header { border-bottom: 1px solid ${RED}; }
     .u-header-top { display: flex; align-items: center; padding: 18px 32px; }
@@ -214,7 +227,7 @@ const ThemeFonts = () => (
        内容不足一屏时列高=内容高，不再把页脚挤出视口；
        内容超过一屏时被 100vh 截断并 sticky 吸顶，竖排文字仍在视口内居中。 */
     .u-left-label-inner {
-      position: sticky; top: 0; height: 100%; max-height: 100vh;
+      position: sticky; top: 0; height: 100%; max-height: 100dvh;
       display: flex; align-items: center; justify-content: center;
       padding: 36px 0;
     }
@@ -222,7 +235,7 @@ const ThemeFonts = () => (
       writing-mode: vertical-rl; text-orientation: mixed;
       font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 10px; color: ${RED}; letter-spacing: 0.15em; line-height: 1.7;
-      max-height: calc(100vh - 72px);
+      max-height: calc(100dvh - 72px);
       white-space: pre-line;   /* 保留公告正文里的段落换行：在竖排里表现为另起一列 */
     }
     .u-divider { border: none; border-top: 1px solid ${RED}; margin: 0; }
@@ -243,7 +256,10 @@ const ThemeFonts = () => (
       width: auto;
       height: auto;
       max-width: 100%;
-      max-height: 700px;
+      /* 关键修复：原来写死 700px，加上页头59 + 首页内边距100 + 页脚46 = 905px，
+         比常见笔记本视口(约 720~860px)高，所以首屏看不到红色页脚，必须滚一下。
+         改成 min(700px, 视口剩余高度)：屏幕够高时仍最大 700px，屏幕不够高时自动缩，页脚永远在首屏内。 */
+      max-height: min(700px, var(--u-viewport-free));
       margin: 0;
     }
     /* 封面竖栏（竖排公告贴封面左侧）：桌面端不显示——桌面已有整页左栏，避免重复。
@@ -378,6 +394,12 @@ const ThemeFonts = () => (
     .u-404-num { font-size: 60px; font-weight: 800; color: #fce0e0; line-height: 1; }
 
     @media (max-width: 680px) {
+      /* 移动端页头/页脚/内边距都变小了，变量跟着改，封面高度自动重算 */
+      :root {
+        --u-header-h: 46px;   /* 14*2 + 17 + 1px 红线 */
+        --u-footer-h: 38px;
+        --u-home-pad: 72px;   /* 24 + 48 */
+      }
       .u-header-top { padding: 14px 16px; }
       .u-logo-wordmark { font-size: 17px; }
       .u-nav-row { gap: 16px; }
@@ -385,7 +407,7 @@ const ThemeFonts = () => (
       .u-left-label { display: none; }
       .u-content { border-left: none; }
       .u-home { padding: 24px 16px 48px; }
-      .u-home-img { max-height: 480px; min-width: 0; }
+      .u-home-img { max-height: min(480px, var(--u-viewport-free)); min-width: 0; }
       /* 移动端：竖排公告贴在封面左侧并排。
          竖栏用 vertical-rl，给 max-height（跟封面等高 480px）+ white-space:normal，
          文字写满一列后自动向左折成第二、三列（像书页），不会向下无限顶、也不溢出。 */
@@ -395,10 +417,10 @@ const ThemeFonts = () => (
         writing-mode: vertical-rl; text-orientation: mixed;
         font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
         font-size: 9px; line-height: 1.75; letter-spacing: 0.1em; color: ${RED};
-        max-height: 480px; white-space: pre-line;   /* 保留公告手动换行=另起一列，且列满时自动折列 */
+        max-height: min(480px, var(--u-viewport-free)); white-space: pre-line;   /* 保留公告手动换行=另起一列，且列满时自动折列 */
         overflow: hidden;
       }
-      .u-home-cover .u-home-img { max-height: 480px; min-width: 0; flex: 1; }
+      .u-home-cover .u-home-img { max-height: min(480px, var(--u-viewport-free)); min-width: 0; flex: 1; }
       .u-photo-grid { padding: 24px 16px 48px; }
       .u-blog-wrap { padding: 28px 16px 60px; }
       .u-post-wrap { padding: 28px 16px 60px; }
