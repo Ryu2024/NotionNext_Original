@@ -255,7 +255,7 @@ const ThemeFonts = () => (
     /* ── Home cover ── 等比缩放、跟视口高度挂钩、左对齐留白 */
     /* 顶部 54px ≈ Blog 首行文字的视觉起点：40(.u-blog-wrap) + 10(.u-blog-item) + 约4px 行高留白，
        让 Home 与 Blog 红线下的空隙看起来一样大 */
-    .u-home { padding: 54px 40px 64px 12px; }
+    .u-home { padding: 54px 40px 64px 6px; }
     .u-home-img {
       display: block;
       width: auto;
@@ -403,7 +403,7 @@ const ThemeFonts = () => (
       :root {
         --u-header-h: 46px;   /* 14*2 + 17 + 1px 红线 */
         --u-footer-h: 38px;
-        --u-home-pad: 90px;   /* 42 + 48 */
+        --u-home-pad: 72px;   /* 24 + 48 */
       }
       .u-header-top { padding: 14px 16px; }
       .u-logo-wordmark { font-size: 17px; }
@@ -411,7 +411,7 @@ const ThemeFonts = () => (
       .u-nav-link { font-size: 11px; }
       .u-left-label { display: none; }
       .u-content { border-left: none; }
-      .u-home { padding: 42px 16px 48px; }   /* 28(.u-blog-wrap) + 10(.u-blog-item) + 约4 行高留白，对齐移动端 Blog 首行 */
+      .u-home { padding: 24px 16px 48px; }
       .u-home-img { max-height: min(480px, var(--u-viewport-free)); min-width: 0; }
       /* 移动端：竖排公告贴在封面左侧并排。
          竖栏用 vertical-rl，给 max-height（跟封面等高 480px）+ white-space:normal，
@@ -427,8 +427,10 @@ const ThemeFonts = () => (
       }
       .u-home-cover .u-home-img { max-height: min(480px, var(--u-viewport-free)); min-width: 0; flex: 1; }
       .u-photo-grid { padding: 24px 16px 48px; }
-      .u-blog-wrap { padding: 28px 16px 60px; }
-      .u-post-wrap { padding: 28px 16px 60px; }
+      /* 首行文字的视觉起点 = 10(wrap) + 10(.u-blog-item) + 约4 行高留白 ≈ 24px，与移动端 Home 图片顶部对齐。
+         About 首行已与 Blog 首行对齐，所以两者用同一个值。 */
+      .u-blog-wrap { padding: 10px 16px 60px; }
+      .u-post-wrap { padding: 10px 16px 60px; }
       .u-footer { height: 38px; font-size: 9px; }
       .u-footer-mark { height: 28px; right: 16px; bottom: 4px; }
       .u-footer-copy { left: 16px; bottom: 7px; }
