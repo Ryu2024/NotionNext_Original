@@ -446,9 +446,8 @@ const getSEOMeta = (props, router, locale) => {
         ? post?.category?.[0]
         : post?.category
       return {
-        title: post
-          ? `${post?.title} | ${siteInfo?.title}`
-          : `${siteInfo?.title} | loading`,
+        // 文章页只显示文章标题，不再拼接 " | 网站名"（微信等分享卡片直接读取这个标题）
+        title: post ? post?.title : `${siteInfo?.title} | loading`,
         description: post?.summary,
         type: post?.type,
         slug: post?.slug,
