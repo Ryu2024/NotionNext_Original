@@ -252,7 +252,7 @@ const ThemeFonts = () => (
     /* ── Home cover ── 等比缩放、跟视口高度挂钩、左对齐留白 */
     /* 顶部 54px ≈ Blog 首行文字的视觉起点：40(.u-blog-wrap) + 10(.u-blog-item) + 约4px 行高留白，
        让 Home 与 Blog 红线下的空隙看起来一样大 */
-    .u-home { padding: 54px 40px 64px; }
+    .u-home { padding: 54px 40px 64px 24px; }
     .u-home-img {
       display: block;
       width: auto;
