@@ -227,7 +227,10 @@ const ThemeFonts = () => (
        内容不足一屏时列高=内容高，不再把页脚挤出视口；
        内容超过一屏时被 100vh 截断并 sticky 吸顶，竖排文字仍在视口内居中。 */
     .u-left-label-inner {
-      position: sticky; top: 0; height: 100%; max-height: 100dvh;
+      position: sticky; top: 0; height: 100%;
+      /* 封顶高度 = 一屏减去页头和页脚，正好等于 Home 页中间区的高度。
+         这样 Blog 等长页面的竖排文字也在同一个范围内居中，和 Home 高度一致。 */
+      max-height: calc(100dvh - var(--u-header-h) - var(--u-footer-h));
       display: flex; align-items: center; justify-content: center;
       padding: 36px 0;
     }
@@ -235,7 +238,7 @@ const ThemeFonts = () => (
       writing-mode: vertical-rl; text-orientation: mixed;
       font-family: 'Shippori Mincho', 'Noto Serif TC', 'Noto Serif SC', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
       font-size: 10px; color: ${RED}; letter-spacing: 0.15em; line-height: 1.7;
-      max-height: calc(100dvh - 72px);
+      max-height: calc(100dvh - var(--u-header-h) - var(--u-footer-h) - 72px);
       white-space: pre-line;   /* 保留公告正文里的段落换行：在竖排里表现为另起一列 */
     }
     .u-divider { border: none; border-top: 1px solid ${RED}; margin: 0; }
@@ -400,7 +403,7 @@ const ThemeFonts = () => (
       :root {
         --u-header-h: 46px;   /* 14*2 + 17 + 1px 红线 */
         --u-footer-h: 38px;
-        --u-home-pad: 72px;   /* 24 + 48 */
+        --u-home-pad: 90px;   /* 42 + 48 */
       }
       .u-header-top { padding: 14px 16px; }
       .u-logo-wordmark { font-size: 17px; }
@@ -408,7 +411,7 @@ const ThemeFonts = () => (
       .u-nav-link { font-size: 11px; }
       .u-left-label { display: none; }
       .u-content { border-left: none; }
-      .u-home { padding: 24px 16px 48px; }
+      .u-home { padding: 42px 16px 48px; }   /* 28(.u-blog-wrap) + 10(.u-blog-item) + 约4 行高留白，对齐移动端 Blog 首行 */
       .u-home-img { max-height: min(480px, var(--u-viewport-free)); min-width: 0; }
       /* 移动端：竖排公告贴在封面左侧并排。
          竖栏用 vertical-rl，给 max-height（跟封面等高 480px）+ white-space:normal，
