@@ -189,11 +189,11 @@ const ThemeFonts = () => (
        改这里的数值即可，无需再去下面逐条算。
        --u-header-h = 上下 padding 18*2 + 字号22*行高1 + 底部 1px 红线 = 59px
        --u-footer-h = .u-footer 的 height
-       --u-home-pad = .u-home 的上下 padding 之和 (36 + 64) */
+       --u-home-pad = .u-home 的上下 padding 之和 (54 + 64) */
     :root {
       --u-header-h: 59px;
       --u-footer-h: 46px;
-      --u-home-pad: 100px;
+      --u-home-pad: 118px;
       /* 一屏内留给封面图的净高度。dvh 让移动端地址栏收放时也准确 */
       --u-viewport-free: calc(100dvh - var(--u-header-h) - var(--u-footer-h) - var(--u-home-pad));
     }
@@ -250,7 +250,9 @@ const ThemeFonts = () => (
     }
 
     /* ── Home cover ── 等比缩放、跟视口高度挂钩、左对齐留白 */
-    .u-home { padding: 36px 40px 64px; }
+    /* 顶部 54px ≈ Blog 首行文字的视觉起点：40(.u-blog-wrap) + 10(.u-blog-item) + 约4px 行高留白，
+       让 Home 与 Blog 红线下的空隙看起来一样大 */
+    .u-home { padding: 54px 40px 64px; }
     .u-home-img {
       display: block;
       width: auto;
@@ -259,7 +261,7 @@ const ThemeFonts = () => (
       /* 关键修复：原来写死 700px，加上页头59 + 首页内边距100 + 页脚46 = 905px，
          比常见笔记本视口(约 720~860px)高，所以首屏看不到红色页脚，必须滚一下。
          改成 min(700px, 视口剩余高度)：屏幕够高时仍最大 700px，屏幕不够高时自动缩，页脚永远在首屏内。 */
-      max-height: min(700px, var(--u-viewport-free));
+      max-height: min(560px, var(--u-viewport-free));
       margin: 0;
     }
     /* 封面竖栏（竖排公告贴封面左侧）：桌面端不显示——桌面已有整页左栏，避免重复。
